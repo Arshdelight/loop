@@ -1,9 +1,9 @@
 import type { AgentEvent } from '@arshdelight/loop-core'
 
 /**
- * fixture 回放器（参考 practi tooltest 的 token 节流流式模式）：
- * 把一段事件脚本按真实节奏推给 dispatch——文本/参数按字符切片，
- * 工具间留人间停顿。Playground 与渲染层单测共用。
+ * fixture 回放器（workbench 子模块）：把一段事件脚本按真实节奏推给
+ * dispatch——文本/参数按字符切片，工具间留人间停顿。提纯自 practi
+ * tooltest 的 token 节流回放模式，下游用它离线预览渲染器（不调真实模型）。
  */
 
 export type ReplayItem =
@@ -29,7 +29,8 @@ export type ReplayItem =
       charDelay?: number
     }
 
-const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms))
+const makeSleep = (speed: number) => (ms: number) =>
+  new Promise<void>(r => setTimeout(r, Math.max(1, Math.round(ms / speed))))
 
 export interface ReplayHandle {
   cancel: () => void
@@ -39,8 +40,9 @@ export interface ReplayHandle {
 export function replayEvents(
   script: ReplayItem[],
   dispatch: (event: AgentEvent) => void,
-  { startDelay = 300 }: { startDelay?: number } = {},
+  { startDelay = 300, speed = 1 }: { startDelay?: number; speed?: number } = {},
 ): ReplayHandle {
+  const sleep = makeSleep(speed)
   let cancelled = false
   const done = (async () => {
     await sleep(startDelay)

@@ -1,10 +1,13 @@
-import { ToolRow, GutterBlock, registerStreamToolRenderer, tryParseJson } from '@arshdelight/loop-react'
+import { ToolRow, GutterBlock, registerStreamToolRenderer, tryParseJson, useLoopT } from '@arshdelight/loop-react'
 import { Check } from 'lucide-react'
 import type { StreamToolRenderProps } from '@arshdelight/loop-react'
 
 /**
- * Playground 的演示渲染器注册——这就是「下游应用注册新工具渲染器」的用法：
- * import '@arshdelight/loop-react' 之后按工具名注册专属卡，未注册的工具
+ * Playground 的示例渲染器（2026-09-18 工具决策：全部工具不进包——
+ * 本文件只属于 playground，是渲染形态的参考示例，不随包分发）。
+ *
+ * 这就是「下游应用注册新工具渲染器」的用法：import
+ * '@arshdelight/loop-react' 之后按工具名注册专属卡，未注册的工具
  * 自动落到 Generic Fallback（见 fixture 里的 mcp__github__search_issues）。
  */
 
@@ -77,6 +80,7 @@ function ReadCard({ toolCall, toolResult, streamingArgs }: StreamToolRenderProps
 
 /** bash：终端风卡片——自带深色底面（rail=false），流式输出期间实时追加。 */
 function BashCard({ toolCall, toolResult, streamingArgs, streamingOutput, pendingApproval }: StreamToolRenderProps) {
+  const t = useLoopT()
   const input = streamingArgs !== undefined && streamingArgs !== ''
     ? tryParseJson(streamingArgs)
     : toolCall.input
@@ -86,7 +90,7 @@ function BashCard({ toolCall, toolResult, streamingArgs, streamingOutput, pendin
   return (
     <ToolRow
       toolName={toolCall.toolName}
-      summary={pendingApproval ? `${command} — ${pendingApproval.level ?? ''}` : command}
+      summary={pendingApproval ? `${command} — ${t('tool.awaitingApproval')}` : command}
       status={toolResult !== undefined ? (failed ? 'error' : 'ok') : 'running'}
       rail={false}
     >

@@ -2,11 +2,12 @@
 
 从 [practi](D:\dev\practi) / [anidea](D:\dev\anidea) / [okoknit](D:\order\okoknit) 三个项目抽提的 **AI agent 编排 + 工具渲染** 共享 npm 包。
 
-- **`@arshdelight/loop-core`**：编排内核 —— AgentEvent 事件协议（引擎无关的公共语言）、StreamEntry 流归并 reducer（纯函数）。零 React 依赖。
-- **`@arshdelight/loop-react`**：渲染层 —— ToolRow 工具行（dsh 式折叠行 + IN/OUT gutter）、工具渲染器注册表（下游注册专属渲染器，未注册工具落 Generic Fallback）、ReasoningBlock、theme.css（CSS 变量 token + Tailwind v4 映射 + 运行态扫光动画）。
-- **`apps/playground`**：fixture 事件流回放的演示场（read / bash 审批+流式输出 / ask_questions 表单卡 / MCP 兜底 / 错误行）。
+- **`@arshdelight/loop-core`**：编排内核 —— AgentEvent 事件协议（引擎无关的公共语言）、StreamEntry 流归并 reducer（纯函数）、挂起工具选择器（宿主 UI 联动）。零 React 依赖。
+- **`@arshdelight/loop-react`**：渲染层 —— ToolRow 工具行（dsh 式折叠行 + IN/OUT gutter）、工具渲染器注册表（下游注册专属渲染器，未注册工具落 Generic Fallback）、ReasoningBlock、theme.css（CSS 变量 token + Tailwind v4 映射 + 运行态扫光动画）、内置中英双字典的 t 协议 i18n。
+- **`@arshdelight/loop-react/workbench`**（可选子模块）：渲染器预览工作台——下游应用装包后，在自己项目的 dev 页面挂 `<RendererWorkbench fixtures={...} />`，注册好的渲染器 + fixture 事件脚本即可离线预览（不调真实模型），自带主题/语言/回放速度切换。
+- **`apps/playground`**：workbench 的 dogfooding 示例（示例渲染器 read / bash / ask_questions + 两个 fixture）。示例渲染器只属于 playground，**不随包分发**。
 
-状态：阶段 0 已落地（事件协议 + 渲染层 + playground）。路线：默认引擎（AI SDK v7 ToolLoopAgent 封装）→ 多模态归一化（DeepSeek / GLM / 豆包）→ markdown 渲染器（practi MarkdownBody 系）→ HITL 挂起桥。设计定调：**loop 包保持最小形态，复杂引擎（如 practi 自研 loop）基于它构建**。
+状态：阶段 0 已落地。路线：默认引擎（AI SDK v7 ToolLoopAgent 封装）→ 多模态归一化（DeepSeek / GLM / 豆包）→ markdown 渲染器（practi MarkdownBody 系）→ HITL 挂起桥。设计定调：**loop 保持最小形态，复杂引擎（如 practi 自研 loop）基于它构建**；**零内置工具**（2026-09-18 决策：包只提供机制——壳/注册表/Fallback/i18n/主题/workbench，渲染形态以 playground 示例存在，避免输出契约绑架下游）；**宿主 UI 联动走协议 B**（`findPendingTool` 选择器 + 宿主自己 watch 流状态实现输入框变形等，包不操纵宿主 UI）。
 
 ## 开发
 
@@ -71,10 +72,32 @@ render(
 )
 ```
 
+## 渲染器预览（workbench）
+
+下游应用（比如你的 APP0）注册了一堆自定义渲染器后，在自己项目里挂一个 dev 页面即可离线预览——不调真实模型，fixture 事件脚本驱动：
+
+```tsx
+// app0/dev/renderer-preview.tsx
+import { RendererWorkbench } from '@arshdelight/loop-react/workbench'
+import { registerMyTools } from '../tools'        // APP0 自己的渲染器注册
+import { fixtures } from './fixtures'             // APP0 自己的 fixture 脚本
+
+registerMyTools()
+
+export function Page() {
+  return <RendererWorkbench fixtures={fixtures} title="APP0 渲染器预览" />
+}
+```
+
+自带：fixture 切换 chips、回放/重置/速度（1x/2x/4x）、主题切换（跟随系统/亮/暗）、语言切换（中/英）。fixture 是 `ReplayItem[]` 事件脚本（文本/参数按字符流式、工具间停顿），见 `apps/playground/src/fixtures` 的示例。
+
+**输入框变形类工具**（ask_questions 等 HITL）的联动方式：工具渲染器只管聊天流内的卡片；输入框变形由宿主 UI 自己实现——用 core 的 `findPendingTool(entries, toolName)` 找挂起中的工具（入参完整且结果未到），找到了就切换 footer 形态，作答经回流通道 resolve（引擎侧挂起桥属路线图）。practi 的 QuestionInputBox 即此模式。
+
 ## i18n（文案协议）
 
 渲染层零 i18n 库依赖，自带一个极小的 t 协议：
 
+- **内置中英双字典**（`enDict` / `zhDict`，key 强制对齐）：`<LoopI18nProvider lang="zh">` 一键切语言；`lang` + `dict` 可组合（dict 优先微调）；新语言 = 往 `loopDicts` 加一份字典；
 - **内置英文 fallback 字典 `enDict` 是 key 的唯一事实源**，key 分层命名（`reasoning.thought`、`tool.group`、`tool.awaitingApproval`…），类型从字典派生，拼错编译期报错；
 - **字典值允许 `string | (params) => string`**——插值与英文复数住在字典值里（如 `tool.group` 的 `1 tool call / N tool calls`），中文包给无复数版本即可，loop 不引入插值库；
 - **下游传 Partial 字典覆盖**（只需包含想改的 key），语言切换 = 换 dict 传值全树重渲；已有 react-i18next / next-intl 的宿主可现场从自己的 t 生成转发字典，Provider 即适配器；

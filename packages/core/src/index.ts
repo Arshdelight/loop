@@ -17,5 +17,6 @@ export {
   applyAgentEvents,
   MAX_TEXT_ENTRY_LENGTH,
 } from './reducer'
+export { findPendingTool, hasPendingTool } from './selectors'
 
 export const LOOP_CORE_VERSION = '0.0.1'

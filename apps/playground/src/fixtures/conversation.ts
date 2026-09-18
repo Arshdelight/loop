@@ -1,5 +1,5 @@
 import type { AgentEvent } from '@arshdelight/loop-core'
-import type { ReplayItem } from '../replay'
+import type { ReplayItem, WorkbenchFixture } from '@arshdelight/loop-react/workbench'
 
 /**
  * 一段覆盖全部事件形态的演示回合脚本：
@@ -49,6 +49,39 @@ export const demoConversation: ReplayItem[] = [
 
   { stream: '渲染层三层结构验证完毕：ToolRow 壳、注册表分发、Generic 兜底。错误与审批样式也都过了一遍。', as: 'text-delta' },
   { event: { type: 'turn-complete', finishReason: 'stop' }, delay: 0 },
+]
+
+/** 状态速览：成功 / 错误 / 中断 三种终态 + 一个停在审批中的行（不收尾）。 */
+const statesOverview: ReplayItem[] = [
+  { stream: '三种终态一次看完。', as: 'text-delta' },
+  { event: { type: 'tool-call-start', toolCallId: 's1', toolName: 'read' } },
+  { event: { type: 'tool-call-input', toolCallId: 's1', input: { path: 'ok.ts' } }, delay: 250 },
+  { event: { type: 'tool-result', toolCallId: 's1', output: { ok: 'success', content: 'export const a = 1' } }, delay: 250 },
+  { event: { type: 'tool-call-start', toolCallId: 's2', toolName: 'write' } },
+  { event: { type: 'tool-call-input', toolCallId: 's2', input: { path: 'readonly/x.md' } }, delay: 250 },
+  { event: { type: 'tool-result', toolCallId: 's2', output: { ok: 'error', error: "EACCES: permission denied, open 'readonly/x.md'\n    at writeFile (fs.js:123)" } }, delay: 250 },
+  { event: { type: 'tool-call-start', toolCallId: 's3', toolName: 'bash' } },
+  { event: { type: 'tool-call-input', toolCallId: 's3', input: { command: 'npm run build' } }, delay: 250 },
+  { event: { type: 'tool-result', toolCallId: 's3', output: { ok: 'aborted' } }, delay: 250 },
+  { stream: '最后这个工具停在审批中，行保持运行态与审批摘要。', as: 'text-delta' },
+  { event: { type: 'tool-call-start', toolCallId: 's4', toolName: 'bash' } },
+  { event: { type: 'tool-call-input', toolCallId: 's4', input: { command: 'rm -rf dist' } }, delay: 200 },
+  { event: { type: 'approval-requested', toolCallId: 's4', level: 'confirm', args: { command: 'rm -rf dist' } }, delay: 0 },
+]
+
+export const fixtures: WorkbenchFixture[] = [
+  {
+    id: 'demo',
+    name: '完整演示回合',
+    description: 'read / bash（审批+流式输出）/ ask_questions 为示例渲染器，mcp__github__search_issues 落 Generic Fallback，write 演示错误行。示例渲染器只属于 playground，不随包分发。',
+    script: demoConversation,
+  },
+  {
+    id: 'states',
+    name: '状态速览',
+    description: '成功 / 错误 / 中断 三种终态 + 停在审批中的运行行。',
+    script: statesOverview,
+  },
 ]
 
 export type { AgentEvent }
