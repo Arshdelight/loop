@@ -40,6 +40,6 @@ export type { LoopTKey, LoopDict, LoopLabelValue, LoopLabelParams, LoopLang, Bui
 export { enDict, zhDict, loopDicts, resolveLabel, mergeLoopDict } from './i18nCore'
 
 // 纯 helpers（注册表模块的再导出，保持单一入口）
-export { registerToolLabel, toolNameLabel, formatResult } from './toolHelpers'
+export { registerToolLabel, unregisterToolLabel, toolNameLabel, formatResult } from './toolHelpers'
 
 export const LOOP_REACT_VERSION = '0.0.1'

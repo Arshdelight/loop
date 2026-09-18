@@ -34,7 +34,7 @@ export function GenericToolCard({ calls, results }: ToolRenderProps) {
   // A uniform group renders as one row (existing Default behavior); the
   // mixed-name case never reaches a named renderer and lands here too.
   const groupTitle = calls.length === 1
-    ? toolNameLabel(first.toolName)
+    ? toolNameLabel(first.toolName, t)
     : t('tool.group', { count: calls.length })
 
   let groupStatus: ToolRowStatus = 'ok'

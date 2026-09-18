@@ -8,7 +8,7 @@ import { useLoopT } from './i18n'
 // here so renderers can import everything from one place); all cards render
 // through the dsh-style ToolRow shell in toolRow/.
 export {
-  toolNameLabel, registerToolLabel, formatResult,
+  toolNameLabel, registerToolLabel, unregisterToolLabel, formatResult,
   getResultStatus, getOutputStatus, getResultError, getResultInterrupted,
   getOutputError, getOutputInterrupted,
   type ToolResultStatus, type ToolRenderProps, type StreamToolRenderProps,

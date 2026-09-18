@@ -3,6 +3,7 @@ import { ChevronRight, AlertCircle } from 'lucide-react'
 import { ToolIcon } from './toolIcon'
 import { deriveToolSummary } from './toolCallModel'
 import { toolNameLabel } from '../toolHelpers'
+import { useLoopT } from '../i18n'
 
 export type ToolRowStatus = 'running' | 'ok' | 'error' | 'interrupted'
 
@@ -55,6 +56,7 @@ export function ToolRow({
   toolName, icon: IconOverride, title, summary, input, status, errorLine,
   defaultOpen = false, open, onToggle, onRowClick, children, statusIcon, rail = true, actions,
 }: ToolRowProps) {
+  const t = useLoopT()
   const [internalOpen, setInternalOpen] = useState(defaultOpen)
   const running = status === 'running'
   const expanded = open ?? internalOpen
@@ -70,7 +72,7 @@ export function ToolRow({
     onToggle?.(next)
   }
 
-  const label = title ?? toolNameLabel(toolName)
+  const label = title ?? toolNameLabel(toolName, t)
   const derivedSummary = summary ?? deriveToolSummary(input)
   const failed = status === 'error'
 

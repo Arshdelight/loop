@@ -5,8 +5,11 @@
  * (toolRegistry → genericToolCard → helpers, one direction).
  *
  * 与 practi 版的差异：toolNameLabel 支持下游 registerToolLabel 注册
- * 新工具的友好名（新工具 + 新渲染器一起注册是包的核心用法）。
+ * 新工具的友好名；传入 t 时默认标题表走 i18n 字典（tool.label.*，
+ * 中英双语见 i18nCore 的 enDict / zhDict）。
  */
+
+import { enDict, type LoopLabelValue, type LoopTFunction, type LoopTKey } from './i18nCore'
 
 export interface ToolRenderProps {
   calls: Array<{ toolCallId: string; toolName: string; input: unknown }>
@@ -21,32 +24,23 @@ export interface StreamToolRenderProps {
   pendingApproval?: { level?: string; args?: Record<string, unknown> }
 }
 
-const BUILTIN_LABELS: Record<string, string> = {
-  ask_questions: 'Asking you',
-  web_search: 'Searching web',
-  webpage_view: 'Reading page',
-  read: 'Reading file',
-  glob: 'Finding files',
-  grep: 'Searching contents',
-  write: 'Writing file',
-  edit: 'Editing file',
-  add_to_workspace: 'Adding to workspace',
-  bash: 'Terminal',
-  skill: 'Loading skill',
-  // Sub-agent tools (agents-as-tools). The name is the agent name.
-  hippo: 'Digesting conversation',
-  research: 'Researching',
-  general: 'Running sub-task',
-}
-
 const customLabels: Record<string, string> = {}
 
-/** 注册（或覆盖）工具的行标题友好名——下游新增工具时配套调用。 */
+/** 注册（或覆盖）工具的行标题友好名——下游新增工具时配套调用。
+ *  静态覆盖，不响应语言切换；动态多语言请传 t 或用渲染器 title。 */
 export function registerToolLabel(toolName: string, label: string): void {
   customLabels[toolName] = label
 }
 
-export function toolNameLabel(name: string): string {
+/** 移除 registerToolLabel 的静态覆盖（如运行时切换语言前清理）。 */
+export function unregisterToolLabel(toolName: string): void {
+  delete customLabels[toolName]
+}
+
+/** 工具行默认标题。解析顺序：registerToolLabel 静态覆盖 > MCP
+ *  server · tool 拆分 > t 字典（tool.label.<name>，未收录时跳过）>
+ *  enDict 英文兜底 > 工具名本身。 */
+export function toolNameLabel(name: string, t?: LoopTFunction): string {
   const custom = customLabels[name]
   if (custom !== undefined) return custom
   // MCP tools (mcp__<server>__<tool>) — show server · tool.
@@ -54,7 +48,14 @@ export function toolNameLabel(name: string): string {
     const parts = name.split('__')
     if (parts.length >= 3) return `${parts[1]} · ${parts.slice(2).join('__')}`
   }
-  return BUILTIN_LABELS[name] ?? name
+  if (t !== undefined) {
+    // 动态 key 不在 LoopTKey 类型内；未知 key 时 t 返回 key 本身，据此回退
+    const key = `tool.label.${name}` as LoopTKey
+    const label = t(key)
+    if (label !== key) return label
+  }
+  const builtin = (enDict as Record<string, LoopLabelValue>)[`tool.label.${name}`]
+  return typeof builtin === 'string' ? builtin : name
 }
 
 export function formatResult(content: string): string {

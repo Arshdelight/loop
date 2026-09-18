@@ -115,7 +115,7 @@ declare module '@arshdelight/loop-react' {
 // 此后 t('mytool.running') 类型合法，dict 里可覆盖
 ```
 
-工具行标题的分工：**有专属渲染器的工具**标题一律走 `t(key)`（或直接传 `title` prop）；**无渲染器的工具**（MCP、子代理等）走内置英文 label 表，可用 `registerToolLabel` 静态覆盖——它不响应语言切换，动态多语言场景请走字典。
+工具行标题的分工：**有专属渲染器的工具**标题可传 `title` prop（或渲染器内 `t(key)`）；**未传 title 的工具**走内置默认标题表（`tool.label.*`，已纳入中英双字典，随 `lang` 切换——read → 读取文件、bash → 终端）；`registerToolLabel` 做静态覆盖（优先级最高，不响应语言切换，`unregisterToolLabel` 移除）；MCP 工具名按 `server · tool` 拆分展示（名称拼接，不翻译）。
 
 样式：Tailwind v4 作为 peerDependency；下游 css 依次 `@import "tailwindcss"` 与
 `@arshdelight/loop-react/theme.css`，并把本包源码目录加入 Tailwind 的 source

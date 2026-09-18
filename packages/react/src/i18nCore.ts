@@ -21,11 +21,26 @@ export interface LoopLabelParams {
   [key: string]: string | number
 }
 
-/** 内置英文 fallback 字典。 */
+/** 内置英文 fallback 字典。tool.label.* 是工具行默认标题表
+ *  （toolNameLabel 查询用，与 toolHelpers 的 BUILTIN_LABELS 一一对应）。 */
 export const enDict = {
   'reasoning.thought': 'Thinking',
   'tool.group': (p) => `${p.count} tool call${p.count === 1 ? '' : 's'}`,
   'tool.awaitingApproval': 'awaiting approval',
+  'tool.label.read': 'Reading file',
+  'tool.label.glob': 'Finding files',
+  'tool.label.grep': 'Searching contents',
+  'tool.label.write': 'Writing file',
+  'tool.label.edit': 'Editing file',
+  'tool.label.bash': 'Terminal',
+  'tool.label.web_search': 'Searching web',
+  'tool.label.webpage_view': 'Reading page',
+  'tool.label.ask_questions': 'Asking you',
+  'tool.label.add_to_workspace': 'Adding to workspace',
+  'tool.label.skill': 'Loading skill',
+  'tool.label.hippo': 'Digesting conversation',
+  'tool.label.research': 'Researching',
+  'tool.label.general': 'Running sub-task',
 } as const satisfies Record<string, LoopLabelValue>
 
 export type BuiltinLoopTKey = keyof typeof enDict
@@ -35,6 +50,20 @@ export const zhDict: Record<BuiltinLoopTKey, LoopLabelValue> = {
   'reasoning.thought': '思考',
   'tool.group': (p) => `${p.count} 个工具调用`,
   'tool.awaitingApproval': '等待确认',
+  'tool.label.read': '读取文件',
+  'tool.label.glob': '查找文件',
+  'tool.label.grep': '搜索内容',
+  'tool.label.write': '写入文件',
+  'tool.label.edit': '编辑文件',
+  'tool.label.bash': '终端',
+  'tool.label.web_search': '搜索网页',
+  'tool.label.webpage_view': '阅读网页',
+  'tool.label.ask_questions': '向你提问',
+  'tool.label.add_to_workspace': '添加到工作区',
+  'tool.label.skill': '加载技能',
+  'tool.label.hippo': '整理对话',
+  'tool.label.research': '调研中',
+  'tool.label.general': '运行子任务',
 }
 
 /** 包直接支持的语言（新语言 = 往这里加一份字典）。 */
@@ -46,6 +75,9 @@ export type LoopLang = keyof typeof loopDicts
 export interface LoopCustomKeys {}
 
 export type LoopTKey = BuiltinLoopTKey | keyof LoopCustomKeys
+
+/** useLoopT 返回的 t 函数类型。 */
+export type LoopTFunction = (key: LoopTKey, params?: LoopLabelParams) => string
 
 /** 下游可传入的覆盖字典：只需包含想覆盖的 key。 */
 export type LoopDict = Partial<Record<LoopTKey, LoopLabelValue>>
