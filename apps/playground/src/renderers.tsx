@@ -1,5 +1,5 @@
 import { ToolRow, GutterBlock, registerStreamToolRenderer, tryParseJson, useLoopT } from '@arshdelight/loop-react'
-import { Check } from 'lucide-react'
+import { Check, MessageCircleQuestion } from 'lucide-react'
 import type { StreamToolRenderProps } from '@arshdelight/loop-react'
 
 /**
@@ -26,6 +26,7 @@ function AskQuestionsCard({ toolCall, streamingArgs, toolResult }: StreamToolRen
   return (
     <ToolRow
       toolName={toolCall.toolName}
+      icon={MessageCircleQuestion}
       status={toolResult !== undefined ? 'ok' : 'running'}
       defaultOpen={toolResult !== undefined}
     >
