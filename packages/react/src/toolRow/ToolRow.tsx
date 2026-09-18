@@ -61,21 +61,29 @@ export function ToolRow({
   // as a glitch column instead of independent in-flight signals.
   const [sweepPhase] = useState(() => -Math.random() * 2.6)
   const btnRef = useRef<HTMLButtonElement>(null)
-  // Sweep-out: when the call settles mid-flight, let the current iteration
-  // finish instead of cutting the band mid-stroke (an abrupt cut reads as a
-  // glitch). Pseudo-element animation events dispatch on the host button;
-  // animationiteration (filtered by pseudoElement) marks one full pass done.
-  const [sweeping, setSweeping] = useState(status === 'running')
   const running = status === 'running'
+  // Sweep-out: when the call settles mid-flight the band fades out in place
+  // over 300ms (the animation keeps running underneath) instead of cutting
+  // mid-stroke or waiting for a random-phase iteration boundary. The class is
+  // fully removed after the fade; a timeout backs up transitionend in case the
+  // event is missed.
+  const [sweeping, setSweeping] = useState(running)
+  const [sweepOut, setSweepOut] = useState(false)
   useEffect(() => {
-    if (running) { setSweeping(true); return }
+    if (running) { setSweepOut(false); setSweeping(true); return }
     const el = btnRef.current
-    if (el === null) return
-    const onIteration = (e: AnimationEvent) => {
-      if (e.pseudoElement === '::after') setSweeping(false)
+    if (el === null) { setSweeping(false); return }
+    const finish = () => setSweeping(false)
+    const onEnd = (e: TransitionEvent) => {
+      if (e.pseudoElement === '::after' && e.propertyName === 'opacity') finish()
     }
-    el.addEventListener('animationiteration', onIteration)
-    return () => el.removeEventListener('animationiteration', onIteration)
+    setSweepOut(true)
+    el.addEventListener('transitionend', onEnd)
+    const timer = setTimeout(finish, 500)
+    return () => {
+      el.removeEventListener('transitionend', onEnd)
+      clearTimeout(timer)
+    }
   }, [running])
   const expanded = open ?? internalOpen
   // No children → static row (dsh's noExpand headers): no chevron, no toggle —
@@ -116,7 +124,7 @@ export function ToolRow({
           <button
             ref={btnRef}
             onClick={toggle}
-            className={`flex items-center gap-2 min-w-0 py-1.5 text-sm text-muted hover:text-main transition-colors text-left ${(expandable || rowAction) ? 'cursor-pointer' : 'cursor-default'} ${sweeping ? 'tool-row-running-sweep' : ''}`}
+            className={`flex items-center gap-2 min-w-0 py-1.5 text-sm text-muted hover:text-main transition-colors text-left ${(expandable || rowAction) ? 'cursor-pointer' : 'cursor-default'} ${sweeping ? 'tool-row-running-sweep' : ''} ${sweeping && sweepOut ? 'tool-row-sweep-out' : ''}`}
             style={sweeping ? ({ '--sweep-delay': `${sweepPhase.toFixed(2)}s` } as CSSProperties) : undefined}
           >
             <span className="relative flex items-center justify-center size-4 shrink-0 rounded-sm">

@@ -89,7 +89,13 @@
     transparent 100%
   );
   animation: tool-row-sweep 2.6s ease-out var(--sweep-delay, 0s) infinite;
+  opacity: 1;
+  transition: opacity 0.3s ease-out;
   pointer-events: none;
+}
+/* 确定性退场：运行结束时原地淡出（JS 在淡出完成后摘掉全部类） */
+.tool-row-running-sweep.tool-row-sweep-out::after {
+  opacity: 0;
 }
 @media (prefers-reduced-motion: reduce) {
   .tool-row-running-sweep::after { animation: none; }

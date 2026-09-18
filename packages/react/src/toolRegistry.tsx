@@ -68,17 +68,24 @@ export function ReasoningBlock({ label, content, defaultExpanded, stateKey, runn
   const userScrolledUpRef = useRef(false)
   const summaryRef = useRef<HTMLSpanElement>(null)
   const btnRef = useRef<HTMLButtonElement>(null)
-  // Sweep-out: 同 ToolRow——流式结束时等当前扫光迭代播完再撤，不中途截断。
+  // Sweep-out: 同 ToolRow——流式结束时原地淡出 300ms，不中途截断。
   const [sweeping, setSweeping] = useState(running)
+  const [sweepOut, setSweepOut] = useState(false)
   useEffect(() => {
-    if (running) { setSweeping(true); return }
+    if (running) { setSweepOut(false); setSweeping(true); return }
     const el = btnRef.current
-    if (el === null) return
-    const onIteration = (e: AnimationEvent) => {
-      if (e.pseudoElement === '::after') setSweeping(false)
+    if (el === null) { setSweeping(false); return }
+    const finish = () => setSweeping(false)
+    const onEnd = (e: TransitionEvent) => {
+      if (e.pseudoElement === '::after' && e.propertyName === 'opacity') finish()
     }
-    el.addEventListener('animationiteration', onIteration)
-    return () => el.removeEventListener('animationiteration', onIteration)
+    setSweepOut(true)
+    el.addEventListener('transitionend', onEnd)
+    const timer = setTimeout(finish, 500)
+    return () => {
+      el.removeEventListener('transitionend', onEnd)
+      clearTimeout(timer)
+    }
   }, [running])
 
   useEffect(() => {
@@ -115,7 +122,7 @@ export function ReasoningBlock({ label, content, defaultExpanded, stateKey, runn
         <button
           ref={btnRef}
           onClick={toggleExpanded}
-          className={`group flex items-center gap-2 w-full py-1.5 text-sm text-left text-muted hover:text-main transition-colors cursor-pointer ${sweeping ? 'tool-row-running-sweep' : ''}`}
+          className={`group flex items-center gap-2 w-full py-1.5 text-sm text-left text-muted hover:text-main transition-colors cursor-pointer ${sweeping ? 'tool-row-running-sweep' : ''} ${sweeping && sweepOut ? 'tool-row-sweep-out' : ''}`}
         >
           <span className="relative block size-4 shrink-0">
             <Lightbulb className="size-4 transition-opacity group-hover:opacity-0" />
