@@ -30,6 +30,17 @@ export const enDict = {
 
 export type BuiltinLoopTKey = keyof typeof enDict
 
+/** 内置中文字典（与 enDict 同 key；新增 key 时两份同步维护）。 */
+export const zhDict: Record<BuiltinLoopTKey, LoopLabelValue> = {
+  'reasoning.thought': '思考',
+  'tool.group': (p) => `${p.count} 个工具调用`,
+  'tool.awaitingApproval': '等待确认',
+}
+
+/** 包直接支持的语言（新语言 = 往这里加一份字典）。 */
+export const loopDicts = { en: enDict, zh: zhDict } as const
+export type LoopLang = keyof typeof loopDicts
+
 /** 下游可 declaration merging 增补的自定义 key（默认为空）。 */
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface LoopCustomKeys {}
@@ -38,6 +49,18 @@ export type LoopTKey = BuiltinLoopTKey | keyof LoopCustomKeys
 
 /** 下游可传入的覆盖字典：只需包含想覆盖的 key。 */
 export type LoopDict = Partial<Record<LoopTKey, LoopLabelValue>>
+
+/**
+ * Provider 的字典合并（纯函数）：显式 dict 优先 > lang 内置字典 >
+ * enDict fallback（resolveLabel 内置）。lang 与 dict 可同时用——
+ * lang 切整语言，dict 做个别微调。
+ */
+export function mergeLoopDict(
+  lang: LoopLang | undefined,
+  dict: LoopDict | undefined,
+): Partial<Record<string, LoopLabelValue>> {
+  return { ...(lang !== undefined ? loopDicts[lang] : {}), ...dict }
+}
 
 /**
  * 解析一条文案：覆盖字典优先，其次内置英文，未知 key 返回 key 本身

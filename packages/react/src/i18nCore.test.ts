@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { enDict, resolveLabel, type LoopLabelParams } from './i18nCore'
+import { enDict, mergeLoopDict, resolveLabel, zhDict, type LoopLabelParams } from './i18nCore'
 
 describe('resolveLabel', () => {
   it('无覆盖时取内置英文 fallback（静态串与模板函数）', () => {
@@ -32,5 +32,29 @@ describe('enDict', () => {
   it('key 分层命名且满足字典类型', () => {
     expect(Object.keys(enDict).length).toBeGreaterThanOrEqual(3)
     expect(enDict['tool.awaitingApproval']).toBeTypeOf('string')
+  })
+})
+
+describe('双语字典与合并（mergeLoopDict）', () => {
+  it('zhDict 与 enDict 的 key 完全对齐', () => {
+    expect(Object.keys(zhDict).sort()).toEqual(Object.keys(enDict).sort())
+  })
+
+  it('lang=zh 直接解析中文（含模板插值）', () => {
+    const merged = mergeLoopDict('zh', undefined)
+    expect(resolveLabel(merged, 'reasoning.thought')).toBe('思考')
+    expect(resolveLabel(merged, 'tool.group', { count: 2 })).toBe('2 个工具调用')
+  })
+
+  it('dict 优先于 lang，未覆盖 key 落 lang 字典', () => {
+    const merged = mergeLoopDict('zh', { 'tool.awaitingApproval': '待审批' })
+    expect(resolveLabel(merged, 'tool.awaitingApproval')).toBe('待审批')
+    expect(resolveLabel(merged, 'reasoning.thought')).toBe('思考')
+  })
+
+  it('无 lang 无 dict 时空覆盖（resolveLabel 落 enDict）', () => {
+    const merged = mergeLoopDict(undefined, undefined)
+    expect(merged).toEqual({})
+    expect(resolveLabel(merged, 'reasoning.thought')).toBe('Thinking')
   })
 })

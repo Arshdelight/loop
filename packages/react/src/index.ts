@@ -34,10 +34,10 @@ export type {
 // 条目视图
 export { StreamEntriesView, ToolEntryView, TextBlock, ErrorBlock } from './streamEntriesView'
 
-// 文案注入（i18n 协议：内置英文 fallback + Partial 字典覆盖 + key 类型化）
+// 文案注入（i18n 协议：内置中英双字典 + Partial 覆盖 + key 类型化）
 export { LoopI18nProvider, useLoopT } from './i18n'
-export type { LoopTKey, LoopDict, LoopLabelValue, LoopLabelParams, BuiltinLoopTKey, LoopCustomKeys } from './i18nCore'
-export { enDict, resolveLabel } from './i18nCore'
+export type { LoopTKey, LoopDict, LoopLabelValue, LoopLabelParams, LoopLang, BuiltinLoopTKey, LoopCustomKeys } from './i18nCore'
+export { enDict, zhDict, loopDicts, resolveLabel, mergeLoopDict } from './i18nCore'
 
 // 纯 helpers（注册表模块的再导出，保持单一入口）
 export { registerToolLabel, toolNameLabel, formatResult } from './toolHelpers'

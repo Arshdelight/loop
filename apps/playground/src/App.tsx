@@ -47,11 +47,7 @@ export function App() {
   }, [theme])
 
   return (
-    <LoopI18nProvider dict={{
-      'reasoning.thought': '思考',
-      'tool.awaitingApproval': '等待确认',
-      'tool.group': (p) => `${p.count} 个工具调用`,
-    }}>
+    <LoopI18nProvider lang="zh">
       <div className="min-h-screen text-main">
         <div className="mx-auto max-w-[46rem] px-5 py-10">
           <header className="mb-6">
