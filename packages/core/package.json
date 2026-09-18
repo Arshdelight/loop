@@ -1,0 +1,10 @@
+{
+  "name": "@loop/core",
+  "version": "0.0.1",
+  "description": "AI agent orchestration core: agent assembly, event protocol, multimodal normalization, provider presets (DeepSeek / GLM / Doubao)",
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  }
+}
