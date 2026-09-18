@@ -3,6 +3,7 @@ import { ChevronRight, AlertCircle } from 'lucide-react'
 import { ToolIcon } from './toolIcon'
 import { deriveToolSummary } from './toolCallModel'
 import { toolNameLabel } from '../toolHelpers'
+import { useSweepDuration } from './useSweep'
 
 export type ToolRowStatus = 'running' | 'ok' | 'error' | 'interrupted'
 
@@ -62,6 +63,7 @@ export function ToolRow({
   const [sweepPhase] = useState(() => -Math.random() * 2.6)
   const btnRef = useRef<HTMLButtonElement>(null)
   const running = status === 'running'
+  const sweepDuration = useSweepDuration(btnRef)
   // Sweep-out: when the call settles mid-flight the band fades out in place
   // over 300ms (the animation keeps running underneath) instead of cutting
   // mid-stroke or waiting for a random-phase iteration boundary. The class is
@@ -125,7 +127,7 @@ export function ToolRow({
             ref={btnRef}
             onClick={toggle}
             className={`flex items-center gap-2 min-w-0 py-1.5 text-sm text-muted hover:text-main transition-colors text-left ${(expandable || rowAction) ? 'cursor-pointer' : 'cursor-default'} ${sweeping ? 'tool-row-running-sweep' : ''} ${sweeping && sweepOut ? 'tool-row-sweep-out' : ''}`}
-            style={sweeping ? ({ '--sweep-delay': `${sweepPhase.toFixed(2)}s` } as CSSProperties) : undefined}
+            style={sweeping ? ({ '--sweep-delay': `${sweepPhase.toFixed(2)}s`, '--sweep-duration': sweepDuration } as CSSProperties) : undefined}
           >
             <span className="relative flex items-center justify-center size-4 shrink-0 rounded-sm">
 

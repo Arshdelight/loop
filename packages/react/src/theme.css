@@ -88,7 +88,7 @@
     var(--loop-sweep) 50%,
     transparent 100%
   );
-  animation: tool-row-sweep 2.6s ease-out var(--sweep-delay, 0s) infinite;
+  animation: tool-row-sweep var(--sweep-duration, 2.6s) ease-out var(--sweep-delay, 0s) infinite;
   opacity: 1;
   transition: opacity 0.3s ease-out;
   pointer-events: none;
