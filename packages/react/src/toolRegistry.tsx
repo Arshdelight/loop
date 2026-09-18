@@ -67,28 +67,6 @@ export function ReasoningBlock({ label, content, defaultExpanded, stateKey, runn
   const scrollRef = useRef<HTMLDivElement>(null)
   const userScrolledUpRef = useRef(false)
   const summaryRef = useRef<HTMLSpanElement>(null)
-  const btnRef = useRef<HTMLButtonElement>(null)
-  // Per-instance random phase, same as ToolRow's.
-  const [sweepPhase] = useState(() => -Math.random() * 2.6)
-  // Sweep-out: 同 ToolRow——流式结束时原地淡出 300ms，不中途截断。
-  const [sweeping, setSweeping] = useState(running)
-  const [sweepOut, setSweepOut] = useState(false)
-  useEffect(() => {
-    if (running) { setSweepOut(false); setSweeping(true); return }
-    const el = btnRef.current
-    if (el === null) { setSweeping(false); return }
-    const finish = () => setSweeping(false)
-    const onEnd = (e: TransitionEvent) => {
-      if (e.pseudoElement === '::after' && e.propertyName === 'opacity') finish()
-    }
-    setSweepOut(true)
-    el.addEventListener('transitionend', onEnd)
-    const timer = setTimeout(finish, 500)
-    return () => {
-      el.removeEventListener('transitionend', onEnd)
-      clearTimeout(timer)
-    }
-  }, [running])
 
   useEffect(() => {
     if (expanded && scrollRef.current && !userScrolledUpRef.current) {
@@ -122,10 +100,8 @@ export function ReasoningBlock({ label, content, defaultExpanded, stateKey, runn
     <div className="flex justify-start mb-2">
       <div className="w-full">
         <button
-          ref={btnRef}
           onClick={toggleExpanded}
-          className={`group flex items-center gap-2 w-full py-1.5 text-sm text-left text-muted hover:text-main transition-colors cursor-pointer ${sweeping ? 'tool-row-running-sweep' : ''} ${sweeping && sweepOut ? 'tool-row-sweep-out' : ''}`}
-          style={sweeping ? ({ '--sweep-delay': `${sweepPhase.toFixed(2)}s` } as React.CSSProperties) : undefined}
+          className={`group flex items-center gap-2 w-full py-1.5 text-sm text-left text-muted hover:text-main transition-colors cursor-pointer ${running ? 'tool-row-running-sweep' : ''}`}
         >
           <span className="relative block size-4 shrink-0">
             <Lightbulb className="size-4 transition-opacity group-hover:opacity-0" />

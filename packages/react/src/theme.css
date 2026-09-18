@@ -5,11 +5,10 @@
  * （具体写法见 apps/playground/src/index.css）。
  *
  * 主题三级控制（优先级从低到高）：
- * 1. 默认自适应：跟随系统 prefers-color-scheme（亮色 = 深色微光扫光，
- *    暗色 = 半透明白扫光）；
+ * 1. 默认自适应：跟随系统 prefers-color-scheme；
  * 2. 显式切换：在 <html> 上设 data-loop-theme="light" 或 "dark"，
  *    覆盖系统偏好（应用内主题切换器用这个）；
- * 3. 终极自定义：直接覆盖 --loop-* 变量（如品牌色扫光）。
+ * 3. 终极自定义：直接覆盖 --loop-* 变量。
  *
  * 注意：本文件注释里不要出现花括号包裹的扩展名列表，Tailwind 的
  * CSS 解析会把它当真声明报错。
@@ -17,14 +16,14 @@
 
 :root {
   color-scheme: light dark;
-  /* 亮色基底（默认）：白高光扫光（在暖白底上形成提亮带） */
+  /* 亮色基底（默认） */
   --loop-bg: #faf9f7;
   --loop-main: #1f1d1a;
   --loop-muted: #6f6a63;
   --loop-line: #e5e1da;
 }
 
-/* 系统暗色：未显式设置 data-loop-theme 时生效；暗底上用暗影条扫光 */
+/* 系统暗色：未显式设置 data-loop-theme 时生效 */
 @media (prefers-color-scheme: dark) {
   :root:not([data-loop-theme]) {
     color-scheme: dark;
@@ -64,8 +63,8 @@
 /* ── ToolRow 运行态扫光（dsh glare-band 原版设计） ────────────────────────
  * 一片背景色的光带从行左外滑到右外，经过时把文字/图标「洗向背景色」再还原。
  * 行宽被布局归一化（摘要撑满剩余宽度），因此固定时长对所有行等速——不做
- * 宽度测量。ease-out + 90% 抵达 + 末 10% 停顿一拍；颜色 = 背景色 60%，
- * 天然随主题（亮色浅洪水 / 暗色深洪水）。 */
+ * 宽度测量、零 JS 参与。ease-out + 90% 抵达 + 末 10% 停顿一拍；颜色 =
+ * 背景色 60%，天然随主题（亮色浅洪水 / 暗色深洪水）；运行结束类摘除即退场。 */
 @keyframes tool-row-sweep {
   0% { left: -300px; }
   90%, 100% { left: 100%; }
@@ -88,14 +87,8 @@
     color-mix(in srgb, var(--loop-bg) 60%, transparent) 55%,
     transparent 100%
   );
-  animation: tool-row-sweep 2.6s ease-out var(--sweep-delay, 0s) infinite;
-  opacity: 1;
-  transition: opacity 0.3s ease-out;
+  animation: tool-row-sweep 2.6s ease-out infinite;
   pointer-events: none;
-}
-/* 确定性退场：运行结束时原地淡出（JS 在淡出完成后摘掉全部类） */
-.tool-row-running-sweep.tool-row-sweep-out::after {
-  opacity: 0;
 }
 @media (prefers-reduced-motion: reduce) {
   .tool-row-running-sweep::after { animation: none; }

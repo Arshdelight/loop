@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type ComponentType, type CSSProperties, type ReactNode } from 'react'
+import { useState, type ComponentType, type ReactNode } from 'react'
 import { ChevronRight, AlertCircle } from 'lucide-react'
 import { ToolIcon } from './toolIcon'
 import { deriveToolSummary } from './toolCallModel'
@@ -56,34 +56,7 @@ export function ToolRow({
   defaultOpen = false, open, onToggle, onRowClick, children, statusIcon, rail = true, actions,
 }: ToolRowProps) {
   const [internalOpen, setInternalOpen] = useState(defaultOpen)
-  // Per-instance random phase (negative delay) for the running sweep: rows
-  // that start together would otherwise sweep in perfect lockstep and read
-  // as a glitch column instead of independent in-flight signals.
-  const [sweepPhase] = useState(() => -Math.random() * 2.6)
-  const wrapRef = useRef<HTMLDivElement>(null)
   const running = status === 'running'
-  // Sweep-out: when the call settles mid-flight the band fades out in place
-  // over 300ms (the animation keeps running underneath) instead of cutting
-  // mid-stroke. The class is fully removed after the fade; a timeout backs up
-  // transitionend in case the event is missed.
-  const [sweeping, setSweeping] = useState(running)
-  const [sweepOut, setSweepOut] = useState(false)
-  useEffect(() => {
-    if (running) { setSweepOut(false); setSweeping(true); return }
-    const el = wrapRef.current
-    if (el === null) { setSweeping(false); return }
-    const finish = () => setSweeping(false)
-    const onEnd = (e: TransitionEvent) => {
-      if (e.pseudoElement === '::after' && e.propertyName === 'opacity') finish()
-    }
-    setSweepOut(true)
-    el.addEventListener('transitionend', onEnd)
-    const timer = setTimeout(finish, 500)
-    return () => {
-      el.removeEventListener('transitionend', onEnd)
-      clearTimeout(timer)
-    }
-  }, [running])
   const expanded = open ?? internalOpen
   // No children → static row (dsh's noExpand headers): no chevron, no toggle —
   // but a non-expandable row may still carry a row-level action (onRowClick).
@@ -115,12 +88,10 @@ export function ToolRow({
         {/* The wrapper spans the FULL row width and carries the hover group +
             the running sweep (dsh design: rows are layout-normalized to the
             container width, so one fixed 2.6s pass reads at one speed on every
-            row — no width measuring). The flex-1 spacer after any actions
-            keeps the empty area clickable. */}
+            row — no width measuring, no JS). The flex-1 spacer after any
+            actions keeps the empty area clickable. */}
         <div
-          ref={wrapRef}
-          className={`group flex items-center w-full ${sweeping ? 'tool-row-running-sweep' : ''} ${sweeping && sweepOut ? 'tool-row-sweep-out' : ''}`}
-          style={sweeping ? ({ '--sweep-delay': `${sweepPhase.toFixed(2)}s` } as CSSProperties) : undefined}
+          className={`group flex items-center w-full ${running ? 'tool-row-running-sweep' : ''}`}
         >
           <button
             onClick={toggle}
