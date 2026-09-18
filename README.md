@@ -42,29 +42,57 @@ pnpm --filter @loop/playground dev   # playground 回放演示
 
 ```tsx
 import {
-  LoopLabelsProvider, StreamEntriesView,
+  LoopI18nProvider, useLoopT, StreamEntriesView,
   registerStreamToolRenderer, registerToolLabel,
   ToolRow, GutterBlock, type StreamToolRenderProps,
 } from '@arshdelight/loop-react'
 import '@arshdelight/loop-react/theme.css'
 
-// 1. 注册你的工具专属渲染器（未注册的自动落 Generic Fallback）
-registerStreamToolRenderer('my_tool', ({ toolCall, toolResult }: StreamToolRenderProps) => (
-  <ToolRow toolName={toolCall.toolName} input={toolCall.input}
-           status={toolResult ? 'ok' : 'running'}>
-    <GutterBlock label="OUT">{JSON.stringify(toolResult?.output)}</GutterBlock>
-  </ToolRow>
-))
-registerToolLabel('my_tool', 'My tool')
+// 1. 注册你的工具专属渲染器（未注册的自动落 Generic Fallback）；
+//    渲染器内文案统一走 t(key, params)，不要硬编码
+registerStreamToolRenderer('my_tool', (props: StreamToolRenderProps) => {
+  const t = useLoopT()
+  return (
+    <ToolRow toolName={props.toolCall.toolName} input={props.toolCall.input}
+             status={props.toolResult ? 'ok' : 'running'}
+             title={t('mytool.running')}>
+      <GutterBlock label="OUT">{JSON.stringify(props.toolResult?.output)}</GutterBlock>
+    </ToolRow>
+  )
+})
+registerToolLabel('my_tool', 'My tool') // 无渲染器工具的静态标题覆盖
 
 // 2. 事件流归并 + 一行渲染（事件来自 loop-core 的协议，引擎任意）
 const entries = applyAgentEvents([], eventScript)
 render(
-  <LoopLabelsProvider labels={{ thought: '思考' }}>
+  <LoopI18nProvider dict={{ 'reasoning.thought': '思考' }}>
     <StreamEntriesView entries={entries} />
-  </LoopLabelsProvider>,
+  </LoopI18nProvider>,
 )
 ```
+
+## i18n（文案协议）
+
+渲染层零 i18n 库依赖，自带一个极小的 t 协议：
+
+- **内置英文 fallback 字典 `enDict` 是 key 的唯一事实源**，key 分层命名（`reasoning.thought`、`tool.group`、`tool.awaitingApproval`…），类型从字典派生，拼错编译期报错；
+- **字典值允许 `string | (params) => string`**——插值与英文复数住在字典值里（如 `tool.group` 的 `1 tool call / N tool calls`），中文包给无复数版本即可，loop 不引入插值库；
+- **下游传 Partial 字典覆盖**（只需包含想改的 key），语言切换 = 换 dict 传值全树重渲；已有 react-i18next / next-intl 的宿主可现场从自己的 t 生成转发字典，Provider 即适配器；
+- **未知 key 返回 key 本身**——漏翻译在界面上直接可见，不静默空白。
+
+自定义渲染器的文案 key 通过 declaration merging 增补（编译期同样可查）：
+
+```ts
+declare module '@arshdelight/loop-react' {
+  interface LoopCustomKeys {
+    'mytool.running': string
+    'mytool.done': string
+  }
+}
+// 此后 t('mytool.running') 类型合法，dict 里可覆盖
+```
+
+工具行标题的分工：**有专属渲染器的工具**标题一律走 `t(key)`（或直接传 `title` prop）；**无渲染器的工具**（MCP、子代理等）走内置英文 label 表，可用 `registerToolLabel` 静态覆盖——它不响应语言切换，动态多语言场景请走字典。
 
 样式：Tailwind v4 作为 peerDependency；下游 css 依次 `@import "tailwindcss"` 与
 `@arshdelight/loop-react/theme.css`，并把本包源码目录加入 Tailwind 的 source

@@ -5,7 +5,7 @@ import {
   type ToolRenderProps, type StreamToolRenderProps,
 } from '../toolHelpers'
 import { deriveToolSummary, firstErrorLine, tryParseJson } from './toolCallModel'
-import { useLoopLabels } from '../labels'
+import { useLoopT } from '../i18n'
 
 function statusFromOutput(output: unknown | undefined): ToolRowStatus {
   if (output === undefined) return 'running'
@@ -27,7 +27,7 @@ function errorLineFromOutput(output: unknown): string | undefined {
  * line in the collapsed head, and an IN/OUT gutter body with inner scroll.
  */
 export function GenericToolCard({ calls, results }: ToolRenderProps) {
-  const labels = useLoopLabels()
+  const t = useLoopT()
   const first = calls[0]
   if (!first) return null
 
@@ -35,7 +35,7 @@ export function GenericToolCard({ calls, results }: ToolRenderProps) {
   // mixed-name case never reaches a named renderer and lands here too.
   const groupTitle = calls.length === 1
     ? toolNameLabel(first.toolName)
-    : labels.toolCalls(calls.length)
+    : t('tool.group', { count: calls.length })
 
   let groupStatus: ToolRowStatus = 'ok'
   let errorLine: string | undefined
@@ -78,7 +78,7 @@ export function GenericToolCard({ calls, results }: ToolRenderProps) {
 }
 
 export function GenericStreamToolCard({ toolCall, streamingArgs, streamingOutput, toolResult, pendingApproval }: StreamToolRenderProps) {
-  const labels = useLoopLabels()
+  const t = useLoopT()
   // Tolerant mid-stream args: a truncated JSON string renders as raw text.
   const effectiveInput = useMemo(
     () => (streamingArgs !== undefined && streamingArgs !== '' ? tryParseJson(streamingArgs) : toolCall.input),
@@ -90,7 +90,7 @@ export function GenericStreamToolCard({ toolCall, streamingArgs, streamingOutput
   const errorLine = toolResult !== undefined ? errorLineFromOutput(toolResult.output) : undefined
 
   const summary = pendingApproval
-    ? `${deriveToolSummary(effectiveInput)} — ${labels.awaitingApproval}`.trim()
+    ? `${deriveToolSummary(effectiveInput)} — ${t('tool.awaitingApproval')}`.trim()
     : deriveToolSummary(effectiveInput)
 
   return (

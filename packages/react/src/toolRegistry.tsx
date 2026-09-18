@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, type ReactNode, type ComponentType } from 
 import { Lightbulb, ChevronRight } from 'lucide-react'
 import { getReasoningExpanded, setReasoningExpanded } from './reasoningUiState'
 import { GenericToolCard, GenericStreamToolCard } from './toolRow/genericToolCard'
-import { useLoopLabels } from './labels'
+import { useLoopT } from './i18n'
 import { useSweepDuration } from './toolRow/useSweep'
 
 // Pure helpers + render-prop types live in toolHelpers.ts (kept re-exported
@@ -61,7 +61,7 @@ export function ReasoningBlock({ label, content, defaultExpanded, stateKey, runn
    *  first line, ellipsized. */
   running?: boolean
 }) {
-  const labels = useLoopLabels()
+  const t = useLoopT()
   const [expanded, setExpanded] = useState(
     stateKey !== undefined ? getReasoningExpanded(stateKey) : (defaultExpanded ?? false),
   )
@@ -133,7 +133,7 @@ export function ReasoningBlock({ label, content, defaultExpanded, stateKey, runn
             <Lightbulb className="size-4 transition-opacity group-hover:opacity-0" />
             <ChevronRight className={`absolute inset-0 size-4 transition-all opacity-0 group-hover:opacity-100 ${expanded ? 'rotate-90' : ''}`} />
           </span>
-          <span className={`shrink-0 ${running ? 'text-main' : ''}`}>{label ?? labels.thought}</span>
+          <span className={`shrink-0 ${running ? 'text-main' : ''}`}>{label ?? t('reasoning.thought')}</span>
           {!expanded && (
             <span
               ref={summaryRef}

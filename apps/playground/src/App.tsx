@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, useReducer } from 'react'
 import { applyAgentEvent, type AgentEvent, type StreamEntry } from '@arshdelight/loop-core'
-import { LoopLabelsProvider, StreamEntriesView } from '@arshdelight/loop-react'
+import { LoopI18nProvider, StreamEntriesView } from '@arshdelight/loop-react'
 import { demoConversation } from './fixtures/conversation'
 import { replayEvents, type ReplayHandle } from './replay'
 import { registerDemoRenderers } from './renderers'
@@ -47,7 +47,11 @@ export function App() {
   }, [theme])
 
   return (
-    <LoopLabelsProvider labels={{ thought: '思考', awaitingApproval: '等待确认', toolCalls: n => `${n} 个工具调用` }}>
+    <LoopI18nProvider dict={{
+      'reasoning.thought': '思考',
+      'tool.awaitingApproval': '等待确认',
+      'tool.group': (p) => `${p.count} 个工具调用`,
+    }}>
       <div className="min-h-screen text-main">
         <div className="mx-auto max-w-[46rem] px-5 py-10">
           <header className="mb-6">
@@ -91,6 +95,6 @@ export function App() {
           <div ref={bottomRef} />
         </div>
       </div>
-    </LoopLabelsProvider>
+    </LoopI18nProvider>
   )
 }
