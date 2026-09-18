@@ -17,6 +17,27 @@ pnpm test        # vitest：core reducer + react 行模型
 pnpm --filter @loop/playground dev   # playground 回放演示
 ```
 
+## 术语
+
+渲染层级自上而下：**条目列表 → 渲染器 → 行壳 → 组成部分**。
+
+| 术语 | 含义 |
+|---|---|
+| **条目（Entry / StreamEntry）** | AgentEvent 流归并后的渲染单元，四种：text / reasoning / tool / error（core 包） |
+| **渲染器（Renderer）** | 单个条目的完整渲染实现。工具渲染器按工具名从注册表分发（`registerToolRenderer` settled 版 / `registerStreamToolRenderer` 流式版），未注册的工具自动落 **Generic Fallback**；思考渲染器无注册表，所有思考块共用 |
+| **行壳（ToolRow）** | dsh 式 disclosure row——任何工具渲染器的折叠行骨架，与展开体容器 |
+| **图标槽** | 行壳左侧的变体图标位，hover 时图标淡出换 chevron（`ToolIcon`，按 `classifyToolVariant` 分类选 lucide 图标） |
+| **标题（label）** | 折叠行的工具友好名（如 "Reading file"），`registerToolLabel` 可注册新工具的标题 |
+| **摘要（summary）** | 标题后的参数单行摘要，`deriveToolSummary` 从 args 按常见键（command/path/query…）推导 |
+| **尾随标记（trailing）** | 折叠行右缘状态位：仅错误/中断显示琥珀警示图标，成功无标记 |
+| **actions 插槽** | 行内动作区（真实按钮，不触发展开） |
+| **展开体（expanded body）** | 点击行后展开的内容区：左导轨（rail，2px 竖线）+ 限高滚动容器 |
+| **GutterBlock（IN/OUT 栅格）** | 展开体里的等宽双列块：左窄列标签（IN/OUT）、右列内容，Z 行为 `whitespace-pre-wrap` |
+| **GenericToolCard（通用兜底卡）** | 未注册工具的默认渲染 = 行壳 + IN/OUT 栅格 |
+| **行模型（toolCallModel）** | 纯函数集：变体分类 / 摘要推导 / 错误首行 / 流式截断 JSON 抢救 |
+| **ReasoningBlock（思考块）** | 思考条目渲染器：灯泡图标 + 「思考」标题 + 摘要（settled 显首行、流式显正在写的尾行并横向跟随）+ 展开体 |
+| **扫光（sweep）** | 运行中行壳上的单条光带动画：只扫过行的**内容宽度**（图标·标题·摘要），不到整行尽头；颜色 `--loop-sweep` 随主题（亮白高光 / 暗影条），每行随机相位 |
+
 ## 下游用法（渲染层）
 
 ```tsx
