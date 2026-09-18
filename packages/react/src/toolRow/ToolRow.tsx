@@ -89,16 +89,17 @@ export function ToolRow({
   return (
     <div className="flex justify-start mb-2">
       <div className="w-full min-w-0">
-        {/* The wrapper carries the hover group + running sweep so both cover
-            the FULL row width; the toggle button is content-width and the
-            flex-1 spacer after any actions keeps the empty area clickable. */}
+        {/* The wrapper carries the hover group + the single full-width running
+            sweep (only here — a second layer on the content-width button would
+            animate on a different container width and read as two bands);
+            the flex-1 spacer after any actions keeps the empty area clickable. */}
         <div
           className={`group flex items-center w-full ${running ? 'tool-row-running-sweep' : ''}`}
           style={running ? ({ '--sweep-delay': `${sweepPhase.toFixed(2)}s` } as CSSProperties) : undefined}
         >
           <button
             onClick={toggle}
-            className={`flex items-center gap-2 min-w-0 py-1.5 text-sm text-muted hover:text-main transition-colors text-left ${(expandable || rowAction) ? 'cursor-pointer' : 'cursor-default'} ${running ? 'tool-row-running-sweep' : ''}`}
+            className={`flex items-center gap-2 min-w-0 py-1.5 text-sm text-muted hover:text-main transition-colors text-left ${(expandable || rowAction) ? 'cursor-pointer' : 'cursor-default'}`}
           >
             <span className="relative flex items-center justify-center size-4 shrink-0 rounded-sm">
 

@@ -17,15 +17,15 @@
 
 :root {
   color-scheme: light dark;
-  /* 亮色基底（默认） */
+  /* 亮色基底（默认）：白高光扫光（在暖白底上形成提亮带） */
   --loop-bg: #faf9f7;
   --loop-main: #1f1d1a;
   --loop-muted: #6f6a63;
   --loop-line: #e5e1da;
-  --loop-sweep: rgba(0, 0, 0, 0.1);
+  --loop-sweep: rgba(255, 255, 255, 0.75);
 }
 
-/* 系统暗色：未显式设置 data-loop-theme 时生效 */
+/* 系统暗色：未显式设置 data-loop-theme 时生效；暗底上用暗影条扫光 */
 @media (prefers-color-scheme: dark) {
   :root:not([data-loop-theme]) {
     color-scheme: dark;
@@ -33,7 +33,7 @@
     --loop-main: #ece8e2;
     --loop-muted: #9a958c;
     --loop-line: #32302b;
-    --loop-sweep: rgba(255, 255, 255, 0.45);
+    --loop-sweep: rgba(0, 0, 0, 0.35);
   }
 }
 
@@ -44,7 +44,7 @@
   --loop-main: #ece8e2;
   --loop-muted: #9a958c;
   --loop-line: #32302b;
-  --loop-sweep: rgba(255, 255, 255, 0.45);
+  --loop-sweep: rgba(0, 0, 0, 0.35);
 }
 
 /* 显式亮色（系统为暗但应用要亮时） */
@@ -54,7 +54,7 @@
   --loop-main: #1f1d1a;
   --loop-muted: #6f6a63;
   --loop-line: #e5e1da;
-  --loop-sweep: rgba(0, 0, 0, 0.1);
+  --loop-sweep: rgba(255, 255, 255, 0.75);
 }
 
 /* Tailwind v4 语义色映射：生成 text-main / text-muted / border-line 工具类。
