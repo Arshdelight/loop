@@ -1,0 +1,19 @@
+@import "tailwindcss";
+@import "@arshdelight/loop-react/theme.css";
+/* 扫描 loop-react 包源码里的工具类（workspace 内相对路径，monorepo 稳定；
+ * 注意注释里别写花括号扩展名列表，Tailwind 的解析会误读它） */
+@source "../../../packages/react/src/**/*.ts";
+@source "../../../packages/react/src/**/*.tsx";
+
+/* playground 自己的深色基底（覆盖包内默认 token） */
+:root {
+  --loop-main: #e8e6e1;
+  --loop-muted: #9a958c;
+  --loop-line: #32302b;
+  color-scheme: dark;
+}
+
+body {
+  background: #1a1917;
+  min-height: 100vh;
+}

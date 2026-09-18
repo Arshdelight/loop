@@ -1,10 +1,14 @@
 {
-  "name": "@loop/core",
+  "name": "@arshdelight/loop-core",
   "version": "0.0.1",
-  "description": "AI agent orchestration core: agent assembly, event protocol, multimodal normalization, provider presets (DeepSeek / GLM / Doubao)",
+  "description": "AI agent orchestration core: event protocol, stream reducer, multimodal primitives",
   "type": "module",
   "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   }
 }

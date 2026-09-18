@@ -1,0 +1,56 @@
+/*
+ * loop-react 主题层：设计 token（CSS 变量）+ Tailwind v4 语义色映射 +
+ * ToolRow 运行态扫光动画。下游在自己的 css 入口按顺序引入 tailwindcss、
+ * 本文件，再用 Tailwind 的 source 指令把本包源码目录加入扫描范围
+ * （具体写法见 apps/playground/src/index.css）。
+ *
+ * 换肤 = 覆盖 --loop-* 变量；默认是深色基底（扫光为半透明白，
+ * 与 practi / anidea 一致），浅色主题请同时覆盖 --loop-sweep。
+ * 注意：本文件注释里不要出现花括号包裹的扩展名列表，Tailwind 的
+ * CSS 解析会把它当真声明报错。
+ */
+
+:root {
+  --loop-main: #eceae6;          /* 标题 / 运行中强调文字 */
+  --loop-muted: #a09a91;         /* 正文 / 次要文字 */
+  --loop-line: #35322d;          /* 分隔线 / 导轨 */
+  --loop-sweep: rgba(255, 255, 255, 0.45); /* 运行态扫光颜色 */
+}
+
+/* Tailwind v4 语义色映射：生成 text-main / text-muted / border-line 工具类。
+ * 下游无需自带同名 token。 */
+@theme inline {
+  --color-main: var(--loop-main);
+  --color-muted: var(--loop-muted);
+  --color-line: var(--loop-line);
+}
+
+/* ── ToolRow 运行态扫光（dsh 式窄条白光，带每行随机相位） ─────────────── */
+@keyframes tool-row-sweep {
+  0% { left: -56px; }
+  90%, 100% { left: 100%; }
+}
+
+.tool-row-running-sweep {
+  position: relative;
+  overflow: hidden;
+}
+.tool-row-running-sweep::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 56px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--loop-sweep) 50%,
+    transparent 100%
+  );
+  animation: tool-row-sweep 2.6s ease-out var(--sweep-delay, 0s) infinite;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tool-row-running-sweep::after { animation: none; }
+}
