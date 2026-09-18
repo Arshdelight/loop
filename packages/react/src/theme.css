@@ -1,20 +1,60 @@
 /*
  * loop-react 主题层：设计 token（CSS 变量）+ Tailwind v4 语义色映射 +
- * ToolRow 运行态扫光动画。下游在自己的 css 入口按顺序引入 tailwindcss、
- * 本文件，再用 Tailwind 的 source 指令把本包源码目录加入扫描范围
+ * ToolRow 运行态扫光动画。下游在自己的 css 入口依次引入 tailwindcss、
+ * 本文件，并把本包源码目录加入 Tailwind 的 source 扫描
  * （具体写法见 apps/playground/src/index.css）。
  *
- * 换肤 = 覆盖 --loop-* 变量；默认是深色基底（扫光为半透明白，
- * 与 practi / anidea 一致），浅色主题请同时覆盖 --loop-sweep。
+ * 主题三级控制（优先级从低到高）：
+ * 1. 默认自适应：跟随系统 prefers-color-scheme（亮色 = 深色微光扫光，
+ *    暗色 = 半透明白扫光）；
+ * 2. 显式切换：在 <html> 上设 data-loop-theme="light" 或 "dark"，
+ *    覆盖系统偏好（应用内主题切换器用这个）；
+ * 3. 终极自定义：直接覆盖 --loop-* 变量（如品牌色扫光）。
+ *
  * 注意：本文件注释里不要出现花括号包裹的扩展名列表，Tailwind 的
  * CSS 解析会把它当真声明报错。
  */
 
 :root {
-  --loop-main: #eceae6;          /* 标题 / 运行中强调文字 */
-  --loop-muted: #a09a91;         /* 正文 / 次要文字 */
-  --loop-line: #35322d;          /* 分隔线 / 导轨 */
-  --loop-sweep: rgba(255, 255, 255, 0.45); /* 运行态扫光颜色 */
+  color-scheme: light dark;
+  /* 亮色基底（默认） */
+  --loop-bg: #faf9f7;
+  --loop-main: #1f1d1a;
+  --loop-muted: #6f6a63;
+  --loop-line: #e5e1da;
+  --loop-sweep: rgba(0, 0, 0, 0.1);
+}
+
+/* 系统暗色：未显式设置 data-loop-theme 时生效 */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-loop-theme]) {
+    color-scheme: dark;
+    --loop-bg: #1a1917;
+    --loop-main: #ece8e2;
+    --loop-muted: #9a958c;
+    --loop-line: #32302b;
+    --loop-sweep: rgba(255, 255, 255, 0.45);
+  }
+}
+
+/* 显式暗色（应用内切换器） */
+:root[data-loop-theme="dark"] {
+  color-scheme: dark;
+  --loop-bg: #1a1917;
+  --loop-main: #ece8e2;
+  --loop-muted: #9a958c;
+  --loop-line: #32302b;
+  --loop-sweep: rgba(255, 255, 255, 0.45);
+}
+
+/* 显式亮色（系统为暗但应用要亮时） */
+:root[data-loop-theme="light"] {
+  color-scheme: light;
+  --loop-bg: #faf9f7;
+  --loop-main: #1f1d1a;
+  --loop-muted: #6f6a63;
+  --loop-line: #e5e1da;
+  --loop-sweep: rgba(0, 0, 0, 0.1);
 }
 
 /* Tailwind v4 语义色映射：生成 text-main / text-muted / border-line 工具类。
@@ -25,7 +65,7 @@
   --color-line: var(--loop-line);
 }
 
-/* ── ToolRow 运行态扫光（dsh 式窄条白光，带每行随机相位） ─────────────── */
+/* ── ToolRow 运行态扫光（dsh 式窄条光带，带每行随机相位） ─────────────── */
 @keyframes tool-row-sweep {
   0% { left: -56px; }
   90%, 100% { left: 100%; }

@@ -5,15 +5,9 @@
 @source "../../../packages/react/src/**/*.ts";
 @source "../../../packages/react/src/**/*.tsx";
 
-/* playground 自己的深色基底（覆盖包内默认 token） */
-:root {
-  --loop-main: #e8e6e1;
-  --loop-muted: #9a958c;
-  --loop-line: #32302b;
-  color-scheme: dark;
-}
-
+/* playground 不覆盖任何 token：主题完全交给包的自适应默认值 +
+ * App 里的 data-loop-theme 切换器控制 */
 body {
-  background: #1a1917;
+  background: var(--loop-bg);
   min-height: 100vh;
 }
