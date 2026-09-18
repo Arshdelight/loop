@@ -58,3 +58,12 @@ practi 后端行为一致。
 工具产出图片 `agent.enqueueImage({ data, mediaType })`，引擎在下一步前把队列
 作为 user file part 消息追加（prepareStep 注入）——三家上游各自踩过的
 「OpenAI 兼容端点 tool 消息只收字符串」坑的统一解法。
+
+## 多轮对话（历史回灌）
+
+`agent.stream({ messages })` 的多轮历史由宿主自己攒（ModelMessage[]）。约定：
+assistant 消息里的 `tool-call` 与紧随其后的独立 `role:'tool'` 消息里的
+`tool-result` 必须成对出现、不留悬空调用——嵌在 assistant 消息里的 tool-result
+会被 AI SDK 提示词转换忽略，悬空调用导致下回合抛 `AI_MissingToolResultsError`。
+最小形状示例与 `appendAssistantTurn` 辅助函数见
+[README「多轮对话历史约定」](../README.md#多轮对话历史约定默认引擎)。

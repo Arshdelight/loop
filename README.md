@@ -82,6 +82,43 @@ render(
 )
 ```
 
+## 多轮对话历史约定（默认引擎）
+
+`agent.stream({ messages })` 传多轮历史时（宿主自己攒 `ModelMessage[]`），必须遵循
+AI SDK v7 提示词转换的成对约定：**工具调用是 assistant 消息里的 `tool-call` part，
+结果放在紧随其后的独立 `role:'tool'` 消息里**。嵌在 assistant 消息 content 里的
+`tool-result` 会被 AI SDK 完全忽略；只要历史里有悬空的 tool-call（没有对应结果），
+下一回合转换遇到 user 消息即抛 `AI_MissingToolResultsError`。一轮的最小正确形状：
+
+```ts
+import type { ModelMessage } from 'ai'
+
+const history: ModelMessage[] = [
+  { role: 'user', content: '北京今天多少度？' },
+  {
+    role: 'assistant',
+    content: [
+      { type: 'text', text: '查一下天气。' },
+      { type: 'tool-call', toolCallId: 'c1', toolName: 'get_weather', input: { city: '北京' } },
+    ],
+  },
+  {
+    role: 'tool',
+    content: [
+      { type: 'tool-result', toolCallId: 'c1', toolName: 'get_weather',
+        output: { type: 'json', value: { ok: 'success', tempC: 23 } } },
+    ],
+  },
+  { role: 'assistant', content: [{ type: 'text', text: '北京今天 23°C。' }] },
+]
+```
+
+要点：
+
+- **成对相邻**：assistant(tool-call…) 后紧跟 tool(tool-result…)；连续多条 tool 消息 AI SDK 会自动合并，不必手动拼成一条；
+- **不留悬空调用**：中止/出错的回合，没拿到结果的 tool-call 要连同它的调用一起整对丢弃；
+- loop-core 提供 `appendAssistantTurn(messages, { text, toolCalls, toolResults })`：把从 AgentEvent 流攒出的一回合产出按上述约定追加进历史（悬空调用自动丢弃），宿主侧只需在消费事件时攒 text / calls / results 三样东西。
+
 ## 渲染器预览（workbench）
 
 下游应用（比如你的 APP0）注册了一堆自定义渲染器后，在自己项目里挂一个 dev 页面即可离线预览——不调真实模型，fixture 事件脚本驱动：

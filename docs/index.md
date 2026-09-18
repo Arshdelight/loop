@@ -7,7 +7,7 @@
 | 文档 | 内容 |
 |---|---|
 | [lucide 图标推荐](./icons.md) | 工具图标的一致性选型：变体官方映射、按场景扩展推荐、UI 辅助图标语义槽、反例。来源：practi / dsh 三轮验证的图标习惯 |
-| [事件协议参考](./event-protocol.md) | AgentEvent 全事件表、消费方式、默认引擎的 fullStream 映射、HITL 与多模态回注约定 |
+| [事件协议参考](./event-protocol.md) | AgentEvent 全事件表、消费方式、默认引擎的 fullStream 映射、HITL 与多模态回注约定、多轮历史回灌约定 |
 
 ## 规划中（随阶段推进补齐）
 
