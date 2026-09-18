@@ -10,5 +10,28 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
+  },
+  "devDependencies": {
+    "@ai-sdk/deepseek": "^3.0.48",
+    "@ai-sdk/openai-compatible": "^3.0.51",
+    "@ai-sdk/zai": "^3.0.13",
+    "ai": "^7.0.105"
+  },
+  "peerDependencies": {
+    "ai": "^7.0.0",
+    "@ai-sdk/deepseek": "^3.0.0",
+    "@ai-sdk/zai": "^3.0.0",
+    "@ai-sdk/openai-compatible": "^3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@ai-sdk/deepseek": {
+      "optional": true
+    },
+    "@ai-sdk/zai": {
+      "optional": true
+    },
+    "@ai-sdk/openai-compatible": {
+      "optional": true
+    }
   }
 }

@@ -19,4 +19,7 @@ export {
 } from './reducer'
 export { findPendingTool, hasPendingTool } from './selectors'
 
+// 默认引擎（AI SDK v7 ToolLoopAgent 封装 → AgentEvent 流）
+export * from './engine'
+
 export const LOOP_CORE_VERSION = '0.0.1'
