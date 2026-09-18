@@ -18,6 +18,8 @@ pnpm test        # vitest：core reducer + react 行模型
 pnpm --filter @loop/playground dev   # playground 回放演示
 ```
 
+更多文档见 [docs/](./docs/index.md)（lucide 图标推荐等）。
+
 ## 术语
 
 渲染层级自上而下：**条目列表 → 渲染器 → 行壳 → 组成部分**。
