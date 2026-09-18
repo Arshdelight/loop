@@ -34,6 +34,12 @@ export type {
 // 条目视图
 export { StreamEntriesView, ToolEntryView, TextBlock, ErrorBlock } from './streamEntriesView'
 
+// markdown 渲染器（practi 全家桶：react-markdown + highlight.js + mermaid + katex）
+export { MarkdownBody, type MarkdownBodyProps } from './markdown/MarkdownBody'
+export { CodeBlock } from './markdown/CodeBlock'
+export { DiagramBlock } from './markdown/DiagramBlock'
+export { normalizeLatexDelimiters } from './markdown/normalizeMath'
+
 // 文案注入（i18n 协议：内置中英双字典 + Partial 覆盖 + key 类型化）
 export { LoopI18nProvider, useLoopT } from './i18n'
 export type { LoopTKey, LoopDict, LoopLabelValue, LoopLabelParams, LoopLang, BuiltinLoopTKey, LoopCustomKeys } from './i18nCore'

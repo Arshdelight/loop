@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import type { StreamEntry, ToolEntry } from '@arshdelight/loop-core'
 import { ReasoningBlock, StreamToolRenderer } from './toolRegistry'
+import { MarkdownBody } from './markdown/MarkdownBody'
 
 /**
  * ToolEntry → StreamToolRenderProps 的桥：把 core 的归并条目翻译成
@@ -22,13 +23,12 @@ export function ToolEntryView({ entry }: { entry: ToolEntry }) {
 
 /**
  * 直接渲染一条 AgentEventStream 归并出的 StreamEntry[]：思考走
- * ReasoningBlock、工具走注册表分发、文本/错误走内置块。这是下游
- * 「最快建立 agent 应用」的一行组件；文本块当前是 pre-wrap 占位，
- * markdown 渲染器（practi MarkdownBody 系）接入后由此替换。
+ * ReasoningBlock、工具走注册表分发、文本走 MarkdownBody（流式尾巴带
+ * 光标）、错误走内置块。这是下游「最快建立 agent 应用」的一行组件。
  */
 export function StreamEntriesView({ entries, streaming }: {
   entries: StreamEntry[]
-  /** 会话是否仍在流式进行中——只有它 + 作为最后一个元素才让思考块带 running 动效。 */
+  /** 会话是否仍在流式进行中——流式尾巴的思考块带 running 动效、文本块带光标。 */
   streaming?: boolean
 }) {
   // running 态只属于「流式尾巴」：列表的最后一个元素（且会话仍在进行）。
@@ -49,7 +49,15 @@ export function StreamEntriesView({ entries, streaming }: {
             )
             break
           case 'text':
-            node = <TextBlock key={i}>{entry.text}</TextBlock>
+            node = (
+              <div key={i} className="mb-2 text-sm leading-relaxed text-main">
+                <MarkdownBody
+                  content={entry.text}
+                  streaming={streaming === true && i === lastIdx}
+                  cursor={streaming === true && i === lastIdx}
+                />
+              </div>
+            )
             break
           case 'tool':
             node = <ToolEntryView key={entry.toolCallId} entry={entry} />
@@ -64,7 +72,7 @@ export function StreamEntriesView({ entries, streaming }: {
   )
 }
 
-/** 文本块（markdown 渲染器接入前的 pre-wrap 占位）。 */
+/** 纯文本块（不走 markdown 的场景：pre-wrap）。 */
 export function TextBlock({ children }: { children: string }) {
   return (
     <div className="whitespace-pre-wrap break-words text-sm leading-relaxed mb-2 text-main">

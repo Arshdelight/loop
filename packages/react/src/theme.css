@@ -21,6 +21,9 @@
   --loop-main: #1f1d1a;
   --loop-muted: #6f6a63;
   --loop-line: #e5e1da;
+  --loop-hover: #eceae4;
+  --loop-accent: #b4552d;
+  --loop-surface: #ffffff;
 }
 
 /* 系统暗色：未显式设置 data-loop-theme 时生效 */
@@ -31,6 +34,9 @@
     --loop-main: #ece8e2;
     --loop-muted: #9a958c;
     --loop-line: #32302b;
+    --loop-hover: #242220;
+    --loop-accent: #e08150;
+    --loop-surface: #201e1b;
   }
 }
 
@@ -41,6 +47,9 @@
   --loop-main: #ece8e2;
   --loop-muted: #9a958c;
   --loop-line: #32302b;
+  --loop-hover: #242220;
+  --loop-accent: #e08150;
+  --loop-surface: #201e1b;
 }
 
 /* 显式亮色（系统为暗但应用要亮时） */
@@ -50,6 +59,9 @@
   --loop-main: #1f1d1a;
   --loop-muted: #6f6a63;
   --loop-line: #e5e1da;
+  --loop-hover: #eceae4;
+  --loop-accent: #b4552d;
+  --loop-surface: #ffffff;
 }
 
 /* Tailwind v4 语义色映射：生成 text-main / text-muted / border-line 工具类。
@@ -58,6 +70,9 @@
   --color-main: var(--loop-main);
   --color-muted: var(--loop-muted);
   --color-line: var(--loop-line);
+  --color-hover: var(--loop-hover);
+  --color-accent: var(--loop-accent);
+  --color-surface: var(--loop-surface);
 }
 
 /* ── ToolRow 运行态扫光（dsh glare-band 原版设计） ────────────────────────

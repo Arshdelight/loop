@@ -41,6 +41,9 @@ export const enDict = {
   'tool.label.hippo': 'Digesting conversation',
   'tool.label.research': 'Researching',
   'tool.label.general': 'Running sub-task',
+  'code.copy': 'Copy code',
+  'code.showDiagram': 'Show diagram',
+  'code.viewSource': 'View source',
 } as const satisfies Record<string, LoopLabelValue>
 
 export type BuiltinLoopTKey = keyof typeof enDict
@@ -64,6 +67,9 @@ export const zhDict: Record<BuiltinLoopTKey, LoopLabelValue> = {
   'tool.label.hippo': '整理对话',
   'tool.label.research': '调研中',
   'tool.label.general': '运行子任务',
+  'code.copy': '复制代码',
+  'code.showDiagram': '查看图表',
+  'code.viewSource': '查看源码',
 }
 
 /** 包直接支持的语言（新语言 = 往这里加一份字典）。 */

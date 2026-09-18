@@ -69,6 +69,49 @@ const statesOverview: ReplayItem[] = [
   { event: { type: 'approval-requested', toolCallId: 's4', level: 'confirm', args: { command: 'rm -rf dist' } }, delay: 0 },
 ]
 
+/** markdown 全家桶展示：流式正文（表格/代码块/公式/mermaid）。 */
+const markdownShowcase: ReplayItem[] = [
+  { stream: '以下是 loop-react markdown 渲染器的能力一览。\n\n', as: 'text-delta', charDelay: 14 },
+  {
+    stream: [
+      '## 渲染能力',
+      '',
+      '| 元素 | 支持 |',
+      '| --- | --- |',
+      '| GFM 表格 | ✅ |',
+      '| 删除线 ~~废弃~~ | ✅ |',
+      '| 行内代码 `applyAgentEvent` | ✅ |',
+      '',
+      '一段 TypeScript 示例：',
+      '',
+      '```ts',
+      'const agent = createLoopAgent({',
+      '  model: createZaiModel({ apiKey }),',
+      '  tools: { read, bash },',
+      '})',
+      'for await (const event of agent.stream({ prompt: "hi" })) {',
+      '  dispatch(event) // AgentEvent 协议',
+      '}',
+      '```',
+      '',
+      '质能方程（LaTeX 归一化后渲染）：',
+      '',
+      '$$E = mc^2$$',
+      '',
+      '最后一张 mermaid 流程图：',
+      '',
+      '```mermaid',
+      'flowchart LR',
+      '  A[AgentEvent 流] --> B[reducer 归并]',
+      '  B --> C[ToolRow 渲染]',
+      '```',
+    ].join('\n'),
+    as: 'text-delta',
+    charDelay: 6,
+  },
+  { event: { type: 'turn-complete', finishReason: 'stop' }, delay: 0 },
+]
+
 export const fixtures: WorkbenchFixture[] = [
   {
     id: 'demo',
@@ -81,6 +124,12 @@ export const fixtures: WorkbenchFixture[] = [
     name: '状态速览',
     description: '成功 / 错误 / 中断 三种终态 + 停在审批中的运行行。',
     script: statesOverview,
+  },
+  {
+    id: 'markdown',
+    name: 'Markdown 渲染',
+    description: 'MarkdownBody 全家桶：GFM 表格 / 代码块（highlight.js 复制）/ LaTeX 公式 / mermaid 图（settled 后渲染，流式期间保持代码块 + 光标回退）。',
+    script: markdownShowcase,
   },
 ]
 
