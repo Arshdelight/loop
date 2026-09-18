@@ -1,12 +1,15 @@
 @import "tailwindcss";
 @import "@arshdelight/loop-react/theme.css";
-/* 扫描 loop-react 包源码里的工具类（workspace 内相对路径，monorepo 稳定；
- * 注意注释里别写花括号扩展名列表，Tailwind 的解析会误读它） */
+@import "@arshdelight/loop-react/markdown.css";
+/* 扫描 loop-react 的工具类：dist 为发布产物路径（build 后存在），
+ * src 兜底未构建场景。注意注释里别写花括号扩展名列表（Tailwind 解析红线） */
+@source "../../../packages/react/dist/index.js";
+@source "../../../packages/react/dist/workbench/index.js";
 @source "../../../packages/react/src/**/*.ts";
 @source "../../../packages/react/src/**/*.tsx";
 
 /* playground 不覆盖任何 token：主题完全交给包的自适应默认值 +
- * App 里的 data-loop-theme 切换器控制 */
+ * workbench 里的 data-loop-theme 切换器控制 */
 body {
   background: var(--loop-bg);
   min-height: 100vh;

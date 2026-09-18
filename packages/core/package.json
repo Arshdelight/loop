@@ -1,27 +1,51 @@
 {
   "name": "@arshdelight/loop-core",
-  "version": "0.0.1",
-  "description": "AI agent orchestration core: event protocol, stream reducer, multimodal primitives",
+  "version": "0.1.0",
+  "description": "AI agent orchestration core: engine-agnostic AgentEvent protocol, stream reducer, ToolLoopAgent-based default engine (HITL bridge, image loopback), provider presets for DeepSeek / GLM / Doubao",
   "type": "module",
-  "main": "./src/index.ts",
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
   },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "keywords": [
+    "ai",
+    "agent",
+    "ai-sdk",
+    "vercel-ai-sdk",
+    "tool-calling",
+    "agent-orchestration",
+    "deepseek",
+    "glm",
+    "doubao"
+  ],
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build": "tsdown"
   },
   "devDependencies": {
     "@ai-sdk/deepseek": "^3.0.48",
     "@ai-sdk/openai-compatible": "^3.0.51",
     "@ai-sdk/zai": "^3.0.13",
-    "ai": "^7.0.105"
+    "ai": "^7.0.105",
+    "tsdown": "^0.23.0"
   },
   "peerDependencies": {
-    "ai": "^7.0.0",
     "@ai-sdk/deepseek": "^3.0.0",
+    "@ai-sdk/openai-compatible": "^3.0.0",
     "@ai-sdk/zai": "^3.0.0",
-    "@ai-sdk/openai-compatible": "^3.0.0"
+    "ai": "^7.0.0"
   },
   "peerDependenciesMeta": {
     "@ai-sdk/deepseek": {

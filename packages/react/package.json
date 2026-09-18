@@ -1,29 +1,51 @@
 {
   "name": "@arshdelight/loop-react",
-  "version": "0.0.1",
-  "description": "Agent UI for loop: ToolRow, tool renderer registry, markdown renderer, reasoning block",
+  "version": "0.1.0",
+  "description": "Agent UI for loop: ToolRow, tool renderer registry with Generic Fallback, markdown renderer (highlight.js / katex / mermaid), bilingual i18n, theming, renderer workbench",
   "type": "module",
-  "main": "./src/index.ts",
-  "style": "./src/theme.css",
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./workbench": "./src/workbench/index.ts",
-    "./theme.css": "./src/theme.css"
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./workbench": {
+      "import": "./dist/workbench/index.js",
+      "types": "./dist/workbench/index.d.ts"
+    },
+    "./theme.css": "./dist/theme.css",
+    "./markdown.css": "./dist/markdown.css"
   },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "sideEffects": [
+    "*.css"
+  ],
+  "keywords": [
+    "ai",
+    "agent",
+    "react",
+    "ai-sdk",
+    "vercel-ai-sdk",
+    "tool-rendering",
+    "markdown",
+    "tailwindcss",
+    "chat-ui"
+  ],
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build": "tsdown && node -e \"const{copyFileSync}=require('fs');copyFileSync('src/theme.css','dist/theme.css');copyFileSync('src/markdown.css','dist/markdown.css')\""
   },
   "peerDependencies": {
-    "@arshdelight/loop-core": ">=0.0.1",
-    "lucide-react": ">=0.500.0",
+    "@arshdelight/loop-core": "^0.1.0",
     "react": "^18.0.0 || ^19.0.0",
     "tailwindcss": "^4.0.0"
-  },
-  "devDependencies": {
-    "@arshdelight/loop-core": "workspace:*",
-    "@types/react": "^19.0.0",
-    "react": "^19.0.0"
   },
   "dependencies": {
     "highlight.js": "^11.12.0",
@@ -35,5 +57,11 @@
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
     "remark-math": "^6.0.0"
+  },
+  "devDependencies": {
+    "@arshdelight/loop-core": "workspace:*",
+    "@types/react": "^19.0.0",
+    "react": "^19.0.0",
+    "tsdown": "^0.23.0"
   }
 }

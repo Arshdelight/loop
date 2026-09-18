@@ -1,6 +1,5 @@
 import { useState, type ReactNode } from 'react'
 import hljs from 'highlight.js'
-import 'highlight.js/styles/github-dark.css'
 import { Check, Copy } from 'lucide-react'
 import { useLoopT } from '../i18n'
 
