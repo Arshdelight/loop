@@ -31,6 +31,12 @@ export interface LoopAgentOptions {
 
 export interface LoopAgentStreamInput {
   prompt?: string | Array<ModelMessage>
+  /**
+   * 多轮历史。必须遵循 assistant(tool-call) + tool(tool-result) 成对约定：
+   * 工具结果放独立的 role:'tool' 消息、不留悬空调用，否则 AI SDK 提示词
+   * 转换抛 AI_MissingToolResultsError。见 README「多轮对话历史约定」与
+   * appendAssistantTurn 辅助函数。
+   */
   messages?: Array<ModelMessage>
   abortSignal?: AbortSignal
 }
