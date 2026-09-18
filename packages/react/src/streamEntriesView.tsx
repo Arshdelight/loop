@@ -26,12 +26,14 @@ export function ToolEntryView({ entry }: { entry: ToolEntry }) {
  * 「最快建立 agent 应用」的一行组件；文本块当前是 pre-wrap 占位，
  * markdown 渲染器（practi MarkdownBody 系）接入后由此替换。
  */
-export function StreamEntriesView({ entries, reasoningRunning }: {
+export function StreamEntriesView({ entries, streaming }: {
   entries: StreamEntry[]
-  /** 最后一块 reasoning 是否为流式尾巴（决定 ReasoningBlock 的 running 态）。 */
-  reasoningRunning?: boolean
+  /** 会话是否仍在流式进行中——只有它 + 作为最后一个元素才让思考块带 running 动效。 */
+  streaming?: boolean
 }) {
-  const lastReasoningIdx = findLastIndex(entries, e => e.kind === 'reasoning')
+  // running 态只属于「流式尾巴」：列表的最后一个元素（且会话仍在进行）。
+  // 思考块流完、后面出现了正文或工具后，它就不再是尾巴，动效立即停止。
+  const lastIdx = entries.length - 1
   return (
     <div className="w-full">
       {entries.map((entry, i) => {
@@ -42,7 +44,7 @@ export function StreamEntriesView({ entries, reasoningRunning }: {
               <ReasoningBlock
                 key={i}
                 content={entry.text}
-                running={reasoningRunning === true && i === lastReasoningIdx}
+                running={streaming === true && i === lastIdx}
               />
             )
             break
@@ -60,14 +62,6 @@ export function StreamEntriesView({ entries, reasoningRunning }: {
       })}
     </div>
   )
-}
-
-function findLastIndex<T>(arr: T[], pred: (t: T) => boolean): number {
-  for (let i = arr.length - 1; i >= 0; i--) {
-    const item = arr[i]
-    if (item !== undefined && pred(item)) return i
-  }
-  return -1
 }
 
 /** 文本块（markdown 渲染器接入前的 pre-wrap 占位）。 */

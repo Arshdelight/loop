@@ -87,7 +87,7 @@ export function App() {
             </button>
           </div>
 
-          <StreamEntriesView entries={entries} reasoningRunning={running} />
+          <StreamEntriesView entries={entries} streaming={running} />
           <div ref={bottomRef} />
         </div>
       </div>
