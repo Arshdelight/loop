@@ -70,10 +70,42 @@ describe('createLoopAgent · fullStream → AgentEvent 翻译', () => {
     expect(types).toContain('step-complete')
     expect(types[types.length - 1]).toBe('turn-complete')
     const finish = events[events.length - 1]
-    expect(finish).toEqual({ type: 'turn-complete', finishReason: 'stop' })
+    expect(finish).toEqual({ type: 'turn-complete', finishReason: 'stop', usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } })
     // text-delta 增量保序拼接
     const text = events.filter(e => e.type === 'text-delta').map(e => (e as { text: string }).text).join('')
     expect(text).toBe('你好！')
+  })
+
+  it('turn-complete.usage：finish 的 usage 映射为回合累计用量', async () => {
+    const { model } = mockModel([
+      [
+        { type: 'text-start', id: 't0' },
+        { type: 'text-delta', id: 't0', delta: '好' },
+        { type: 'text-end', id: 't0' },
+        { type: 'finish', finishReason: { unified: 'stop', raw: 'stop' }, usage: { inputTokens: { total: 10 }, outputTokens: { total: 5 }, totalTokens: { total: 15 } } },
+      ],
+    ])
+    const agent = createLoopAgent({ model })
+    const events = await collect(agent.stream({ prompt: 'hi' }))
+    const finish = events[events.length - 1] as Extract<AgentEvent, { type: 'turn-complete' }>
+    expect(finish.finishReason).toBe('stop')
+    expect(finish.usage).toEqual({ inputTokens: 10, outputTokens: 5, totalTokens: 15 })
+  })
+
+  it('provider 未上报 token 数（usage 空对象）→ turn-complete.usage 缺省', async () => {
+    const { model } = mockModel([
+      [
+        { type: 'text-start', id: 't0' },
+        { type: 'text-delta', id: 't0', delta: '好' },
+        { type: 'text-end', id: 't0' },
+        { type: 'finish', finishReason: { unified: 'stop', raw: 'stop' }, usage: { inputTokens: {}, outputTokens: {} } },
+      ],
+    ])
+    const agent = createLoopAgent({ model })
+    const events = await collect(agent.stream({ prompt: 'hi' }))
+    const finish = events[events.length - 1] as Extract<AgentEvent, { type: 'turn-complete' }>
+    expect(finish.finishReason).toBe('stop')
+    expect(finish.usage).toBeUndefined()
   })
 
   it('工具回合：tool-call → execute → tool-result（output 归一为 ok 约定）', async () => {
@@ -102,8 +134,8 @@ describe('createLoopAgent · fullStream → AgentEvent 翻译', () => {
     const result = events.find(e => e.type === 'tool-result') as Extract<AgentEvent, { type: 'tool-result' }>
     expect(result.toolCallId).toBe('t1')
     expect(result.output).toEqual({ ok: 'success', echoed: 'hi' })
-    // 非约定形状的输出会被包一层 ok:'success'
-    expect(events[events.length - 1]).toEqual({ type: 'turn-complete', finishReason: 'stop' })
+    // 非约定形状的输出会被包一层 ok:'success'；usage 为两步累计
+    expect(events[events.length - 1]).toEqual({ type: 'turn-complete', finishReason: 'stop', usage: { inputTokens: 2, outputTokens: 2, totalTokens: 4 } })
   })
 
   it('非约定输出被包裹为 {ok:"success", value}', async () => {

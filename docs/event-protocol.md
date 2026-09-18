@@ -16,7 +16,7 @@
 | `approval-requested` | `toolCallId, level?, args?` | 工具需要人工审批（HITL） |
 | `tool-result` | `toolCallId, toolName?, output` | 工具终态；`output.ok ∈ success / error / aborted / interjected` |
 | `step-complete` | — | 一个 step（LLM 调用 + 工具批次）结束 |
-| `turn-complete` | `finishReason` | 回合结束：`stop / aborted / error / max-steps / blocked` |
+| `turn-complete` | `finishReason, usage?` | 回合结束：`stop / aborted / error / max-steps / blocked`；`usage` 为回合累计 token 用量（input/output/total，provider 未上报时缺省） |
 | `error` | `message` | 非致命错误（渲染为错误条目） |
 
 约定：**错误没有独立事件**——`tool-result` 的 `ok:'error'` + `error` 字段承载；所有工具

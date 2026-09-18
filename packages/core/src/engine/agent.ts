@@ -15,7 +15,7 @@
 
 import { ToolLoopAgent, isStepCount } from 'ai'
 import type { LanguageModel, ModelMessage, ToolSet } from 'ai'
-import type { AgentEvent, FinishReason, ToolOutput } from '../events'
+import type { AgentEvent, FinishReason, ToolOutput, TurnUsage } from '../events'
 import { createUserBridge, type UserBridge } from './hitl'
 import { drainImages, enqueueImage, type LoopImagePart } from './imageQueue'
 
@@ -74,6 +74,16 @@ function toFinishReason(reason: string): FinishReason {
   return 'stop'
 }
 
+/** AI SDK totalUsage → 回合累计用量；三项皆缺省时整体缺省（provider 可能不报 usage）。 */
+function toUsage(usage: unknown): TurnUsage | undefined {
+  const u = (typeof usage === 'object' && usage !== null ? usage : {}) as Record<string, unknown>
+  const inputTokens = typeof u.inputTokens === 'number' ? u.inputTokens : undefined
+  const outputTokens = typeof u.outputTokens === 'number' ? u.outputTokens : undefined
+  const totalTokens = typeof u.totalTokens === 'number' ? u.totalTokens : undefined
+  if (inputTokens === undefined && outputTokens === undefined && totalTokens === undefined) return undefined
+  return { inputTokens, outputTokens, totalTokens }
+}
+
 function errorText(error: unknown): string {
   if (error instanceof Error) return error.message
   return String(error)
@@ -128,7 +138,7 @@ async function* translateFullStream(fullStream: AsyncIterable<{ type: string }>)
         yield { type: 'step-complete' }
         break
       case 'finish':
-        yield { type: 'turn-complete', finishReason: toFinishReason(p.finishReason) }
+        yield { type: 'turn-complete', finishReason: toFinishReason(p.finishReason), usage: toUsage(p.totalUsage) }
         break
       case 'abort':
         yield { type: 'turn-complete', finishReason: 'aborted' }

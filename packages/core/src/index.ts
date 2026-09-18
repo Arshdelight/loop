@@ -4,6 +4,7 @@ export type {
   FinishReason,
   ToolOutput,
   ToolResultOk,
+  TurnUsage,
 } from './events'
 export type {
   StreamEntry,
@@ -22,4 +23,4 @@ export { findPendingTool, hasPendingTool } from './selectors'
 // 默认引擎（AI SDK v7 ToolLoopAgent 封装 → AgentEvent 流）
 export * from './engine'
 
-export const LOOP_CORE_VERSION = '0.1.1'
+export const LOOP_CORE_VERSION = '0.1.2'

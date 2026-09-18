@@ -29,6 +29,13 @@ export type FinishReason =
   | 'max-steps'
   | 'blocked'
 
+/** 回合累计 token 用量（默认引擎取 AI SDK finish part 的 totalUsage）。 */
+export interface TurnUsage {
+  inputTokens?: number
+  outputTokens?: number
+  totalTokens?: number
+}
+
 export type AgentEvent =
   | { type: 'reasoning-delta'; text: string }
   | { type: 'text-delta'; text: string }
@@ -50,7 +57,12 @@ export type AgentEvent =
     }
   /** 一个 step（LLM 调用 + 工具批次）结束。 */
   | { type: 'step-complete' }
-  | { type: 'turn-complete'; finishReason: FinishReason }
+  | {
+      type: 'turn-complete'
+      finishReason: FinishReason
+      /** 回合累计 token 用量（provider 未上报或字段缺失时缺省）。 */
+      usage?: TurnUsage
+    }
   | { type: 'error'; message: string }
 
 /** 引擎实现方约定的最小接口：一个 async iterable 的 AgentEvent 流。 */
