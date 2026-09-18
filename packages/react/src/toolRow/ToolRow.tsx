@@ -1,4 +1,4 @@
-import { useState, type ComponentType, type CSSProperties, type ReactNode } from 'react'
+import { useState, useEffect, useRef, type ComponentType, type CSSProperties, type ReactNode } from 'react'
 import { ChevronRight, AlertCircle } from 'lucide-react'
 import { ToolIcon } from './toolIcon'
 import { deriveToolSummary } from './toolCallModel'
@@ -60,6 +60,23 @@ export function ToolRow({
   // that start together would otherwise sweep in perfect lockstep and read
   // as a glitch column instead of independent in-flight signals.
   const [sweepPhase] = useState(() => -Math.random() * 2.6)
+  const btnRef = useRef<HTMLButtonElement>(null)
+  // Sweep-out: when the call settles mid-flight, let the current iteration
+  // finish instead of cutting the band mid-stroke (an abrupt cut reads as a
+  // glitch). Pseudo-element animation events dispatch on the host button;
+  // animationiteration (filtered by pseudoElement) marks one full pass done.
+  const [sweeping, setSweeping] = useState(status === 'running')
+  const running = status === 'running'
+  useEffect(() => {
+    if (running) { setSweeping(true); return }
+    const el = btnRef.current
+    if (el === null) return
+    const onIteration = (e: AnimationEvent) => {
+      if (e.pseudoElement === '::after') setSweeping(false)
+    }
+    el.addEventListener('animationiteration', onIteration)
+    return () => el.removeEventListener('animationiteration', onIteration)
+  }, [running])
   const expanded = open ?? internalOpen
   // No children → static row (dsh's noExpand headers): no chevron, no toggle —
   // but a non-expandable row may still carry a row-level action (onRowClick).
@@ -75,7 +92,6 @@ export function ToolRow({
 
   const label = title ?? toolNameLabel(toolName)
   const derivedSummary = summary ?? deriveToolSummary(input)
-  const running = status === 'running'
   const failed = status === 'error'
 
   // No trailing icon on success — a completed call needs no mark; failures
@@ -98,9 +114,10 @@ export function ToolRow({
           className="group flex items-center w-full"
         >
           <button
+            ref={btnRef}
             onClick={toggle}
-            className={`flex items-center gap-2 min-w-0 py-1.5 text-sm text-muted hover:text-main transition-colors text-left ${(expandable || rowAction) ? 'cursor-pointer' : 'cursor-default'} ${running ? 'tool-row-running-sweep' : ''}`}
-            style={running ? ({ '--sweep-delay': `${sweepPhase.toFixed(2)}s` } as CSSProperties) : undefined}
+            className={`flex items-center gap-2 min-w-0 py-1.5 text-sm text-muted hover:text-main transition-colors text-left ${(expandable || rowAction) ? 'cursor-pointer' : 'cursor-default'} ${sweeping ? 'tool-row-running-sweep' : ''}`}
+            style={sweeping ? ({ '--sweep-delay': `${sweepPhase.toFixed(2)}s` } as CSSProperties) : undefined}
           >
             <span className="relative flex items-center justify-center size-4 shrink-0 rounded-sm">
 
