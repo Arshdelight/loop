@@ -7,7 +7,15 @@
 - **`@arshdelight/loop-react/workbench`**（可选子模块）：渲染器预览工作台——下游应用装包后，在自己项目的 dev 页面挂 `<RendererWorkbench fixtures={...} />`，注册好的渲染器 + fixture 事件脚本即可离线预览（不调真实模型），自带主题/语言/回放速度切换。
 - **`apps/playground`**：workbench 的 dogfooding 示例（示例渲染器 read / bash / ask_questions + 三个 fixture：完整回合 / 状态速览 / Markdown 渲染）。示例渲染器只属于 playground，**不随包分发**。
 
-状态：路线图三件套已全部落地（默认引擎 + markdown 渲染器 + 多模态归一化第一块），剩余 npm 发布（tsdown 构建 + 发包）。设计定调：**loop 保持最小形态，复杂引擎（如 practi 自研 loop）基于它构建**；**零内置工具**（2026-09-18 决策：包只提供机制——壳/注册表/Fallback/i18n/主题/workbench，渲染形态以 playground 示例存在，避免输出契约绑架下游）；**宿主 UI 联动走协议 B**（`findPendingTool` 选择器 + 宿主自己 watch 流状态实现输入框变形等，包不操纵宿主 UI）。
+状态：**v0.1.0 已发布 npm**（`@arshdelight/loop-core` + `@arshdelight/loop-react`，MIT）。路线图三件套（默认引擎 + markdown 渲染器 + 多模态归一化第一块）全部落地。设计定调：**loop 保持最小形态，复杂引擎（如 practi 自研 loop）基于它构建**；**零内置工具**（2026-09-18 决策：包只提供机制——壳/注册表/Fallback/i18n/主题/workbench，渲染形态以 playground 示例存在，避免输出契约绑架下游）；**宿主 UI 联动走协议 B**（`findPendingTool` 选择器 + 宿主自己 watch 流状态实现输入框变形等，包不操纵宿主 UI）。
+
+## 安装
+
+```bash
+npm install @arshdelight/loop-core @arshdelight/loop-react
+# peer：react / tailwindcss / ai（v7）按需自备；provider 三选一：
+# @ai-sdk/deepseek 或 @ai-sdk/zai 或 @ai-sdk/openai-compatible（豆包 Ark）
+```
 
 ## 开发
 
