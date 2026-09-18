@@ -22,7 +22,6 @@
   --loop-main: #1f1d1a;
   --loop-muted: #6f6a63;
   --loop-line: #e5e1da;
-  --loop-sweep: rgba(255, 255, 255, 0.75);
 }
 
 /* 系统暗色：未显式设置 data-loop-theme 时生效；暗底上用暗影条扫光 */
@@ -33,7 +32,6 @@
     --loop-main: #ece8e2;
     --loop-muted: #9a958c;
     --loop-line: #32302b;
-    --loop-sweep: rgba(0, 0, 0, 0.35);
   }
 }
 
@@ -44,7 +42,6 @@
   --loop-main: #ece8e2;
   --loop-muted: #9a958c;
   --loop-line: #32302b;
-  --loop-sweep: rgba(0, 0, 0, 0.35);
 }
 
 /* 显式亮色（系统为暗但应用要亮时） */
@@ -54,7 +51,6 @@
   --loop-main: #1f1d1a;
   --loop-muted: #6f6a63;
   --loop-line: #e5e1da;
-  --loop-sweep: rgba(255, 255, 255, 0.75);
 }
 
 /* Tailwind v4 语义色映射：生成 text-main / text-muted / border-line 工具类。
@@ -65,9 +61,13 @@
   --color-line: var(--loop-line);
 }
 
-/* ── ToolRow 运行态扫光（dsh 式窄条光带，带每行随机相位） ─────────────── */
+/* ── ToolRow 运行态扫光（dsh glare-band 原版设计） ────────────────────────
+ * 一片背景色的光带从行左外滑到右外，经过时把文字/图标「洗向背景色」再还原。
+ * 行宽被布局归一化（摘要撑满剩余宽度），因此固定时长对所有行等速——不做
+ * 宽度测量。ease-out + 90% 抵达 + 末 10% 停顿一拍；颜色 = 背景色 60%，
+ * 天然随主题（亮色浅洪水 / 暗色深洪水）。 */
 @keyframes tool-row-sweep {
-  0% { left: -56px; }
+  0% { left: -300px; }
   90%, 100% { left: 100%; }
 }
 
@@ -81,14 +81,14 @@
   top: 0;
   bottom: 0;
   left: 0;
-  width: 56px;
+  width: 300px;
   background: linear-gradient(
     90deg,
     transparent 0%,
-    var(--loop-sweep) 50%,
+    color-mix(in srgb, var(--loop-bg) 60%, transparent) 55%,
     transparent 100%
   );
-  animation: tool-row-sweep var(--sweep-duration, 2.6s) ease-out var(--sweep-delay, 0s) infinite;
+  animation: tool-row-sweep 2.6s ease-out var(--sweep-delay, 0s) infinite;
   opacity: 1;
   transition: opacity 0.3s ease-out;
   pointer-events: none;

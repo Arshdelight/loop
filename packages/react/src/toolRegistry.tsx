@@ -3,7 +3,6 @@ import { Lightbulb, ChevronRight } from 'lucide-react'
 import { getReasoningExpanded, setReasoningExpanded } from './reasoningUiState'
 import { GenericToolCard, GenericStreamToolCard } from './toolRow/genericToolCard'
 import { useLoopT } from './i18n'
-import { useSweepDuration } from './toolRow/useSweep'
 
 // Pure helpers + render-prop types live in toolHelpers.ts (kept re-exported
 // here so renderers can import everything from one place); all cards render
@@ -69,7 +68,6 @@ export function ReasoningBlock({ label, content, defaultExpanded, stateKey, runn
   const userScrolledUpRef = useRef(false)
   const summaryRef = useRef<HTMLSpanElement>(null)
   const btnRef = useRef<HTMLButtonElement>(null)
-  const sweepDuration = useSweepDuration(btnRef)
   // Per-instance random phase, same as ToolRow's.
   const [sweepPhase] = useState(() => -Math.random() * 2.6)
   // Sweep-out: 同 ToolRow——流式结束时原地淡出 300ms，不中途截断。
@@ -127,7 +125,7 @@ export function ReasoningBlock({ label, content, defaultExpanded, stateKey, runn
           ref={btnRef}
           onClick={toggleExpanded}
           className={`group flex items-center gap-2 w-full py-1.5 text-sm text-left text-muted hover:text-main transition-colors cursor-pointer ${sweeping ? 'tool-row-running-sweep' : ''} ${sweeping && sweepOut ? 'tool-row-sweep-out' : ''}`}
-          style={sweeping ? ({ '--sweep-delay': `${sweepPhase.toFixed(2)}s`, '--sweep-duration': sweepDuration } as React.CSSProperties) : undefined}
+          style={sweeping ? ({ '--sweep-delay': `${sweepPhase.toFixed(2)}s` } as React.CSSProperties) : undefined}
         >
           <span className="relative block size-4 shrink-0">
             <Lightbulb className="size-4 transition-opacity group-hover:opacity-0" />

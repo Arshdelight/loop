@@ -3,7 +3,6 @@ import { ChevronRight, AlertCircle } from 'lucide-react'
 import { ToolIcon } from './toolIcon'
 import { deriveToolSummary } from './toolCallModel'
 import { toolNameLabel } from '../toolHelpers'
-import { useSweepDuration } from './useSweep'
 
 export type ToolRowStatus = 'running' | 'ok' | 'error' | 'interrupted'
 
@@ -61,19 +60,17 @@ export function ToolRow({
   // that start together would otherwise sweep in perfect lockstep and read
   // as a glitch column instead of independent in-flight signals.
   const [sweepPhase] = useState(() => -Math.random() * 2.6)
-  const btnRef = useRef<HTMLButtonElement>(null)
+  const wrapRef = useRef<HTMLDivElement>(null)
   const running = status === 'running'
-  const sweepDuration = useSweepDuration(btnRef)
   // Sweep-out: when the call settles mid-flight the band fades out in place
   // over 300ms (the animation keeps running underneath) instead of cutting
-  // mid-stroke or waiting for a random-phase iteration boundary. The class is
-  // fully removed after the fade; a timeout backs up transitionend in case the
-  // event is missed.
+  // mid-stroke. The class is fully removed after the fade; a timeout backs up
+  // transitionend in case the event is missed.
   const [sweeping, setSweeping] = useState(running)
   const [sweepOut, setSweepOut] = useState(false)
   useEffect(() => {
     if (running) { setSweepOut(false); setSweeping(true); return }
-    const el = btnRef.current
+    const el = wrapRef.current
     if (el === null) { setSweeping(false); return }
     const finish = () => setSweeping(false)
     const onEnd = (e: TransitionEvent) => {
@@ -115,19 +112,19 @@ export function ToolRow({
   return (
     <div className="flex justify-start mb-2">
       <div className="w-full min-w-0">
-        {/* The wrapper carries the hover group so the chevron swap works
-            anywhere on the row; the flex-1 spacer after any actions keeps the
-            empty area clickable. The running sweep lives on the content-width
-            BUTTON only — the band sweeps across the row's content (icon ·
-            title · summary), not the full line. */}
+        {/* The wrapper spans the FULL row width and carries the hover group +
+            the running sweep (dsh design: rows are layout-normalized to the
+            container width, so one fixed 2.6s pass reads at one speed on every
+            row — no width measuring). The flex-1 spacer after any actions
+            keeps the empty area clickable. */}
         <div
-          className="group flex items-center w-full"
+          ref={wrapRef}
+          className={`group flex items-center w-full ${sweeping ? 'tool-row-running-sweep' : ''} ${sweeping && sweepOut ? 'tool-row-sweep-out' : ''}`}
+          style={sweeping ? ({ '--sweep-delay': `${sweepPhase.toFixed(2)}s` } as CSSProperties) : undefined}
         >
           <button
-            ref={btnRef}
             onClick={toggle}
-            className={`flex items-center gap-2 min-w-0 py-1.5 text-sm text-muted hover:text-main transition-colors text-left ${(expandable || rowAction) ? 'cursor-pointer' : 'cursor-default'} ${sweeping ? 'tool-row-running-sweep' : ''} ${sweeping && sweepOut ? 'tool-row-sweep-out' : ''}`}
-            style={sweeping ? ({ '--sweep-delay': `${sweepPhase.toFixed(2)}s`, '--sweep-duration': sweepDuration } as CSSProperties) : undefined}
+            className={`flex items-center gap-2 min-w-0 py-1.5 text-sm text-muted hover:text-main transition-colors text-left ${(expandable || rowAction) ? 'cursor-pointer' : 'cursor-default'}`}
           >
             <span className="relative flex items-center justify-center size-4 shrink-0 rounded-sm">
 
