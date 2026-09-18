@@ -2,12 +2,12 @@
 
 从 [practi](D:\dev\practi) / [anidea](D:\dev\anidea) / [okoknit](D:\order\okoknit) 三个项目抽提的 **AI agent 编排 + 工具渲染** 共享 npm 包。
 
-- **`@arshdelight/loop-core`**：编排内核 —— AgentEvent 事件协议（引擎无关的公共语言）、StreamEntry 流归并 reducer（纯函数）、挂起工具选择器（宿主 UI 联动）。零 React 依赖。
-- **`@arshdelight/loop-react`**：渲染层 —— ToolRow 工具行（dsh 式折叠行 + IN/OUT gutter）、工具渲染器注册表（下游注册专属渲染器，未注册工具落 Generic Fallback）、ReasoningBlock、theme.css（CSS 变量 token + Tailwind v4 映射 + 运行态扫光动画）、内置中英双字典的 t 协议 i18n。
+- **`@arshdelight/loop-core`**：编排内核 —— AgentEvent 事件协议（引擎无关的公共语言，见 [docs/event-protocol.md](./docs/event-protocol.md)）、StreamEntry 流归并 reducer（纯函数）、挂起工具选择器（宿主 UI 联动）、**默认引擎** `createLoopAgent`（AI SDK v7 ToolLoopAgent 封装：fullStream → AgentEvent 翻译、HITL 挂起桥 `waitForUser/resolveUser`、图片回注 `enqueueImage`）、provider 预设（DeepSeek / GLM / 豆包 Ark / 任意 OpenAI 兼容端点 + 能力矩阵）。零 React 依赖。
+- **`@arshdelight/loop-react`**：渲染层 —— ToolRow 工具行（dsh 式折叠行 + IN/OUT gutter）、工具渲染器注册表（下游注册专属渲染器，未注册工具落 Generic Fallback）、ReasoningBlock、**markdown 渲染器全家桶**（react-markdown + highlight.js 代码高亮 + katex 公式 + mermaid 图表 + 流式光标 + LaTeX 分隔符归一）、theme.css（CSS 变量 token + Tailwind v4 映射 + 运行态扫光动画）、内置中英双字典的 t 协议 i18n。
 - **`@arshdelight/loop-react/workbench`**（可选子模块）：渲染器预览工作台——下游应用装包后，在自己项目的 dev 页面挂 `<RendererWorkbench fixtures={...} />`，注册好的渲染器 + fixture 事件脚本即可离线预览（不调真实模型），自带主题/语言/回放速度切换。
-- **`apps/playground`**：workbench 的 dogfooding 示例（示例渲染器 read / bash / ask_questions + 两个 fixture）。示例渲染器只属于 playground，**不随包分发**。
+- **`apps/playground`**：workbench 的 dogfooding 示例（示例渲染器 read / bash / ask_questions + 三个 fixture：完整回合 / 状态速览 / Markdown 渲染）。示例渲染器只属于 playground，**不随包分发**。
 
-状态：阶段 0 已落地。路线：默认引擎（AI SDK v7 ToolLoopAgent 封装）→ 多模态归一化（DeepSeek / GLM / 豆包）→ markdown 渲染器（practi MarkdownBody 系）→ HITL 挂起桥。设计定调：**loop 保持最小形态，复杂引擎（如 practi 自研 loop）基于它构建**；**零内置工具**（2026-09-18 决策：包只提供机制——壳/注册表/Fallback/i18n/主题/workbench，渲染形态以 playground 示例存在，避免输出契约绑架下游）；**宿主 UI 联动走协议 B**（`findPendingTool` 选择器 + 宿主自己 watch 流状态实现输入框变形等，包不操纵宿主 UI）。
+状态：路线图三件套已全部落地（默认引擎 + markdown 渲染器 + 多模态归一化第一块），剩余 npm 发布（tsdown 构建 + 发包）。设计定调：**loop 保持最小形态，复杂引擎（如 practi 自研 loop）基于它构建**；**零内置工具**（2026-09-18 决策：包只提供机制——壳/注册表/Fallback/i18n/主题/workbench，渲染形态以 playground 示例存在，避免输出契约绑架下游）；**宿主 UI 联动走协议 B**（`findPendingTool` 选择器 + 宿主自己 watch 流状态实现输入框变形等，包不操纵宿主 UI）。
 
 ## 开发
 

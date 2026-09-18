@@ -7,12 +7,12 @@
 | 文档 | 内容 |
 |---|---|
 | [lucide 图标推荐](./icons.md) | 工具图标的一致性选型：变体官方映射、按场景扩展推荐、UI 辅助图标语义槽、反例。来源：practi / dsh 三轮验证的图标习惯 |
+| [事件协议参考](./event-protocol.md) | AgentEvent 全事件表、消费方式、默认引擎的 fullStream 映射、HITL 与多模态回注约定 |
 
 ## 规划中（随阶段推进补齐）
 
 | 文档 | 时机 |
 |---|---|
-| 事件协议参考（AgentEvent / StreamEntry） | 默认引擎落地时（阶段 1），附 fullStream → AgentEvent 的映射说明 |
 | 渲染器开发指南 | 首个下游（非 playground）接入反馈后，沉淀 props 契约与注册模式的实战细节 |
 | 主题定制指南 | 首个下游自定义主题（非默认深浅色）需求出现时，沉淀 --loop-* token 清单与覆盖方式 |
 
