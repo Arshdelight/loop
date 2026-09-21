@@ -1,6 +1,6 @@
 {
   "name": "@arshdelight/loop-core",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "AI agent orchestration core: engine-agnostic AgentEvent protocol, stream reducer, ToolLoopAgent-based default engine (HITL bridge, image loopback), provider presets for DeepSeek / GLM / Doubao",
   "type": "module",
   "license": "MIT",
