@@ -4,22 +4,38 @@ import type { LanguageModel, ToolSet } from 'ai'
 import { createLoopAgent } from './agent'
 import type { AgentEvent } from '../events'
 
+type MockScript =
+  | Array<Record<string, unknown>>
+  | { parts: Array<Record<string, unknown>>; keepOpen?: boolean }
+
 /** 手写 mock LanguageModel：按调用序号播放剧本，并记录每次收到的 prompt。 */
-function mockModel(scripts: Array<Array<Record<string, unknown>>>) {
+function mockModel(scripts: Array<MockScript>) {
   const prompts: unknown[] = []
   let call = 0
   const model = {
     specificationVersion: 'v3',
     provider: 'mock',
     modelId: 'mock-model',
-    async doStream({ prompt }: { prompt: unknown }) {
-      const script = scripts[Math.min(call, scripts.length - 1)] ?? []
+    async doStream({ prompt, abortSignal }: { prompt: unknown; abortSignal?: AbortSignal }) {
+      const raw = scripts[Math.min(call, scripts.length - 1)] ?? []
+      const script = Array.isArray(raw) ? raw : raw.parts
+      const keepOpen = !Array.isArray(raw) && raw.keepOpen === true
       call++
       prompts.push(prompt)
       return {
         stream: new ReadableStream<Record<string, unknown>>({
           start(controller) {
             for (const part of script) controller.enqueue(part)
+            if (keepOpen && abortSignal) {
+              // 模拟真实 provider：请求被中止时底层流以 AbortError 中断
+              // （SDK 据此产出 fullStream 的 abort part），剧本播完不主动关闭
+              abortSignal.addEventListener(
+                'abort',
+                () => controller.error(new DOMException('This operation was aborted', 'AbortError')),
+                { once: true },
+              )
+              return
+            }
             controller.close()
           },
         }),
@@ -156,6 +172,122 @@ describe('createLoopAgent · fullStream → AgentEvent 翻译', () => {
     const events = await collect(agent.stream({ prompt: 'go' }))
     const result = events.find(e => e.type === 'tool-result') as Extract<AgentEvent, { type: 'tool-result' }>
     expect(result.output).toEqual({ ok: 'success', value: 'plain string output' })
+  })
+})
+
+describe('createLoopAgent · 中止/出错收尾的在途工具补发', () => {
+  it('abort 收尾：在途工具先按 start 顺序补发 tool-result {ok:"aborted"}，再发 turn-complete(aborted)', async () => {
+    const controller = new AbortController()
+    // keepOpen：start 已发出、input 未闭合、结果未到——中止时的在途悬置态
+    const { model } = mockModel([
+      { parts: [
+        { type: 'tool-input-start', id: 'c1', toolName: 'echo' },
+        { type: 'tool-input-delta', id: 'c1', delta: '{"msg"' },
+        { type: 'tool-input-start', id: 'c2', toolName: 'other' },
+      ], keepOpen: true },
+    ])
+    const agent = createLoopAgent({ model })
+    const events: AgentEvent[] = []
+    // 消费到两个 start 都到达后中止（模拟宿主在工具在途时按停止），继续排干到流结束
+    for await (const event of agent.stream({ prompt: 'go', abortSignal: controller.signal })) {
+      events.push(event)
+      if (events.filter(e => e.type === 'tool-call-start').length === 2) controller.abort()
+    }
+    expect(events[events.length - 1]).toEqual({ type: 'turn-complete', finishReason: 'aborted' })
+    // turn-complete 之前是按 start 顺序补发的两条合成结果
+    expect(events.slice(-3, -1)).toEqual([
+      { type: 'tool-result', toolCallId: 'c1', toolName: 'echo', output: { ok: 'aborted' } },
+      { type: 'tool-result', toolCallId: 'c2', toolName: 'other', output: { ok: 'aborted' } },
+    ])
+  })
+
+  it('已拿到结果（真实 result / tool-error）的调用不补发，只补发中止时的在途调用', async () => {
+    const controller = new AbortController()
+    // 第一步：fine 正常完成、bad 执行报错；第二步：hang 开始后回合并被中止
+    const { model } = mockModel([
+      [
+        { type: 'tool-call', toolCallId: 'a', toolName: 'fine', input: '{}' },
+        { type: 'tool-call', toolCallId: 'b', toolName: 'bad', input: '{}' },
+        { type: 'finish', finishReason: { unified: 'tool-calls', raw: 'tool_calls' }, usage: { inputTokens: { total: 1 }, outputTokens: { total: 1 }, totalTokens: { total: 2 } } },
+      ],
+      { parts: [{ type: 'tool-input-start', id: 'c', toolName: 'hang' }], keepOpen: true },
+    ])
+    const tools: ToolSet = {
+      fine: tool({
+        inputSchema: jsonSchema<{}>({ type: 'object' }),
+        execute: async () => ({ ok: 'success' }),
+      }),
+      bad: tool({
+        inputSchema: jsonSchema<{}>({ type: 'object' }),
+        // 标注返回类型：裸 throw 箭头函数推断为 Promise<never>，
+        // SDK tool() 的重载对 OUTPUT=never 解析失败
+        execute: async (): Promise<{ ok: 'error' }> => {
+          throw new Error('boom')
+        },
+      }),
+      hang: tool({
+        inputSchema: jsonSchema<{}>({ type: 'object' }),
+        execute: async () => new Promise(() => {}),
+      }),
+    }
+    const agent = createLoopAgent({ model, tools })
+    const events: AgentEvent[] = []
+    for await (const event of agent.stream({ prompt: 'go', abortSignal: controller.signal })) {
+      events.push(event)
+      if (event.type === 'tool-call-start' && event.toolCallId === 'c') controller.abort()
+    }
+    // 全回合三条结果：两条真实（success / error 归一），一条合成补发
+    // （两条真实结果并发执行，到达顺序不保证，按 toolCallId 排序后比对）
+    const results = (events.filter(e => e.type === 'tool-result') as Array<Extract<AgentEvent, { type: 'tool-result' }>>)
+      .sort((x, y) => x.toolCallId.localeCompare(y.toolCallId))
+    expect(results).toEqual([
+      { type: 'tool-result', toolCallId: 'a', toolName: 'fine', output: { ok: 'success' } },
+      { type: 'tool-result', toolCallId: 'b', toolName: 'bad', output: { ok: 'error', error: 'boom' } },
+      { type: 'tool-result', toolCallId: 'c', toolName: 'hang', output: { ok: 'aborted' } },
+    ])
+    expect(events[events.length - 1]).toEqual({ type: 'turn-complete', finishReason: 'aborted' })
+  })
+
+  it('error 收尾：在途调用补发 {ok:"aborted"}，随后是 error 事件', async () => {
+    const { model } = mockModel([
+      [
+        { type: 'tool-input-start', id: 'c1', toolName: 'echo' },
+        { type: 'error', error: new Error('provider 500') },
+      ],
+    ])
+    const agent = createLoopAgent({ model })
+    const events = await collect(agent.stream({ prompt: 'go' }))
+    const last = events[events.length - 1] as Extract<AgentEvent, { type: 'turn-complete' } | { type: 'error' }>
+    expect(last.type === 'error' || last.finishReason === 'error').toBe(true)
+    const flushIndex = events.findIndex(e => e.type === 'tool-result' && (e as Extract<AgentEvent, { type: 'tool-result' }>).output.ok === 'aborted')
+    const errorIndex = events.findIndex(e => e.type === 'error')
+    expect(flushIndex).toBeGreaterThan(-1)
+    expect(errorIndex).toBeGreaterThan(flushIndex)
+    const flushed = events[flushIndex] as Extract<AgentEvent, { type: 'tool-result' }>
+    expect(flushed).toEqual({ type: 'tool-result', toolCallId: 'c1', toolName: 'echo', output: { ok: 'aborted' } })
+  })
+
+  it('多回合互不影响：每回合只补发本回合的在途调用', async () => {
+    const { model } = mockModel([
+      { parts: [{ type: 'tool-input-start', id: 'r1', toolName: 'echo' }], keepOpen: true },
+      { parts: [{ type: 'tool-input-start', id: 'r2', toolName: 'echo' }], keepOpen: true },
+    ])
+    const agent = createLoopAgent({ model })
+    const syntheticIds = (events: AgentEvent[]) =>
+      (events.filter(e => e.type === 'tool-result') as Array<Extract<AgentEvent, { type: 'tool-result' }>>)
+        .filter(e => e.output.ok === 'aborted')
+        .map(e => e.toolCallId)
+    const run = async (prompt: string) => {
+      const controller = new AbortController()
+      const events: AgentEvent[] = []
+      for await (const event of agent.stream({ prompt, abortSignal: controller.signal })) {
+        events.push(event)
+        if (event.type === 'tool-call-start') controller.abort()
+      }
+      return events
+    }
+    expect(syntheticIds(await run('one'))).toEqual(['r1'])
+    expect(syntheticIds(await run('two'))).toEqual(['r2'])
   })
 })
 

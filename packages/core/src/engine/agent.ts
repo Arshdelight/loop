@@ -89,10 +89,27 @@ function errorText(error: unknown): string {
   return String(error)
 }
 
-/** fullStream parts → AgentEvent 的翻译（引擎的协议出口）。 */
-// 内部函数；part 判别按 AI SDK v7 TextStreamPart 的运行时形状 switch，
-// 未识别的 part（text-start/end、source、raw 等）静默跳过。
+/**
+ * fullStream parts → AgentEvent 的翻译（引擎的协议出口）。
+ *
+ * 内部函数；part 判别按 AI SDK v7 TextStreamPart 的运行时形状 switch，
+ * 未识别的 part（text-start/end、source、raw 等）静默跳过。每次调用对应
+ * 一个回合，函数内维护一份回合内状态：在途工具调用集合（tool-call-start
+ * 与 tool-result 的差集）。回合以 abort / error 收尾时，先按 start 顺序为
+ * 在途调用补发合成 `tool-result { ok: 'aborted' }`（协议约定由 loop-react
+ * 渲染为 interrupted 终态，渲染层的扫光按「收到 tool-result 即停」设计），
+ * 再发收尾事件。合成结果只进事件流（渲染折叠 / 宿主落库 entries），宿主
+ * 攒多轮历史时应把 `ok:'aborted'` 的结果剔除，让悬空调用对照常整对丢弃
+ * （见 README「多轮对话历史约定」）。
+ */
 async function* translateFullStream(fullStream: AsyncIterable<{ type: string }>): AsyncGenerator<AgentEvent> {
+  const inflight = new Map<string, string>() // toolCallId → toolName（Map 保持 start 顺序）
+  function* flushInflight(): Generator<AgentEvent> {
+    for (const [toolCallId, toolName] of inflight) {
+      yield { type: 'tool-result', toolCallId, toolName, output: { ok: 'aborted' } }
+    }
+    inflight.clear()
+  }
   for await (const part of fullStream) {
     const p = part as Record<string, any>
     switch (p.type) {
@@ -103,6 +120,7 @@ async function* translateFullStream(fullStream: AsyncIterable<{ type: string }>)
         if (typeof p.text === 'string' && p.text !== '') yield { type: 'reasoning-delta', text: p.text }
         break
       case 'tool-input-start':
+        inflight.set(String(p.id), String(p.toolName))
         yield { type: 'tool-call-start', toolCallId: String(p.id), toolName: String(p.toolName) }
         break
       case 'tool-input-delta':
@@ -112,6 +130,7 @@ async function* translateFullStream(fullStream: AsyncIterable<{ type: string }>)
         yield { type: 'tool-call-input', toolCallId: p.toolCallId, input: p.input }
         break
       case 'tool-result':
+        inflight.delete(String(p.toolCallId))
         yield {
           type: 'tool-result',
           toolCallId: p.toolCallId,
@@ -120,6 +139,7 @@ async function* translateFullStream(fullStream: AsyncIterable<{ type: string }>)
         }
         break
       case 'tool-error':
+        inflight.delete(String(p.toolCallId))
         yield {
           type: 'tool-result',
           toolCallId: p.toolCallId,
@@ -141,9 +161,14 @@ async function* translateFullStream(fullStream: AsyncIterable<{ type: string }>)
         yield { type: 'turn-complete', finishReason: toFinishReason(p.finishReason), usage: toUsage(p.totalUsage) }
         break
       case 'abort':
+        yield* flushInflight()
         yield { type: 'turn-complete', finishReason: 'aborted' }
         break
       case 'error':
+        // 引擎 error 路径同样有在途调用悬挂；补发用 ok:'aborted' 而非
+        // ok:'error'——后者按约定承载「工具自身执行出错」，而这里是回合
+        // 层面被打断，工具没跑完不是工具的错（渲染层也据此显示 interrupted）
+        yield* flushInflight()
         yield { type: 'error', message: errorText(p.error) }
         break
       default:

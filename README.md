@@ -117,6 +117,7 @@ const history: ModelMessage[] = [
 
 - **成对相邻**：assistant(tool-call…) 后紧跟 tool(tool-result…)；连续多条 tool 消息 AI SDK 会自动合并，不必手动拼成一条；
 - **不留悬空调用**：中止/出错的回合，没拿到结果的 tool-call 要连同它的调用一起整对丢弃；
+- **中止/出错回合的合成结果不进历史**：引擎在 `turn-complete(aborted)` / `error` 前会为在途工具补发 `tool-result {ok:'aborted'}`（供渲染层把工具行落到 interrupted 终态）；宿主攒 `toolResults` 时应把 `ok:'aborted'` 的结果剔除，其调用对照常被 `appendAssistantTurn` 整对丢弃；
 - loop-core 提供 `appendAssistantTurn(messages, { text, toolCalls, toolResults })`：把从 AgentEvent 流攒出的一回合产出按上述约定追加进历史（悬空调用自动丢弃），宿主侧只需在消费事件时攒 text / calls / results 三样东西。
 
 ## 渲染器预览（workbench）

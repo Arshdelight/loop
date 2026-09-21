@@ -46,6 +46,12 @@ for await (const event of agent.stream({ prompt: 'hi' })) dispatch(event)  // �
 
 未识别的 part（text-start/end、source、raw 等）静默跳过。
 
+回合以 `abort` / `error` 收尾时，引擎先按 `tool-call-start` 出现顺序为在途调用
+（已 start 未收到 result）补发合成 `tool-result`（`output: {ok:'aborted'}`），再发
+收尾事件——渲染层据此把工具行落到 interrupted 终态，而不是永远悬挂运行态。合成
+结果只进事件流（渲染折叠 / 宿主落库 entries）；宿主攒多轮历史时应把 `ok:'aborted'`
+的结果剔除，让悬空调用对照常整对丢弃（见 README「多轮对话历史约定」）。
+
 ## HITL（人在环路）
 
 ask 类工具的 execute 内 `await agent.waitForUser()` 挂起；宿主用
