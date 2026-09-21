@@ -56,7 +56,11 @@ export type AgentEvent =
       output: ToolOutput
     }
   /** 一个 step（LLM 调用 + 工具批次）结束。 */
-  | { type: 'step-complete' }
+  | {
+      type: 'step-complete'
+      /** 该步 LLM 调用的 token 用量，供宿主实时更新上下文占用（不必等回合收尾）。 */
+      usage?: TurnUsage
+    }
   | {
       type: 'turn-complete'
       finishReason: FinishReason

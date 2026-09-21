@@ -155,7 +155,7 @@ async function* translateFullStream(fullStream: AsyncIterable<{ type: string }>)
         }
         break
       case 'finish-step':
-        yield { type: 'step-complete' }
+        yield { type: 'step-complete', usage: toUsage(p.usage) }
         break
       case 'finish':
         yield { type: 'turn-complete', finishReason: toFinishReason(p.finishReason), usage: toUsage(p.totalUsage) }

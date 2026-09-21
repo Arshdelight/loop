@@ -124,6 +124,36 @@ describe('createLoopAgent · fullStream → AgentEvent 翻译', () => {
     expect(finish.usage).toBeUndefined()
   })
 
+  it('step-complete.usage：finish-step 的 usage 映射为该步用量（不必等回合收尾）', async () => {
+    const { model } = mockModel([
+      [
+        { type: 'text-start', id: 't0' },
+        { type: 'text-delta', id: 't0', delta: '好' },
+        { type: 'text-end', id: 't0' },
+        { type: 'finish', finishReason: { unified: 'stop', raw: 'stop' }, usage: { inputTokens: { total: 10 }, outputTokens: { total: 5 }, totalTokens: { total: 15 } } },
+      ],
+    ])
+    const agent = createLoopAgent({ model })
+    const events = await collect(agent.stream({ prompt: 'hi' }))
+    const step = events.find(e => e.type === 'step-complete') as Extract<AgentEvent, { type: 'step-complete' }>
+    expect(step.usage).toEqual({ inputTokens: 10, outputTokens: 5, totalTokens: 15 })
+  })
+
+  it('provider 未上报 token 数 → step-complete.usage 缺省', async () => {
+    const { model } = mockModel([
+      [
+        { type: 'text-start', id: 't0' },
+        { type: 'text-delta', id: 't0', delta: '好' },
+        { type: 'text-end', id: 't0' },
+        { type: 'finish', finishReason: { unified: 'stop', raw: 'stop' }, usage: { inputTokens: {}, outputTokens: {} } },
+      ],
+    ])
+    const agent = createLoopAgent({ model })
+    const events = await collect(agent.stream({ prompt: 'hi' }))
+    const step = events.find(e => e.type === 'step-complete') as Extract<AgentEvent, { type: 'step-complete' }>
+    expect(step.usage).toBeUndefined()
+  })
+
   it('工具回合：tool-call → execute → tool-result（output 归一为 ok 约定）', async () => {
     const { model } = mockModel([
       [
