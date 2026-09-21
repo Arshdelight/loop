@@ -48,4 +48,4 @@ export { enDict, zhDict, loopDicts, resolveLabel, mergeLoopDict } from './i18nCo
 // 纯 helpers（注册表模块的再导出，保持单一入口）
 export { registerToolLabel, unregisterToolLabel, toolNameLabel, formatResult } from './toolHelpers'
 
-export const LOOP_REACT_VERSION = '0.0.1'
+export const LOOP_REACT_VERSION = '0.1.1'
