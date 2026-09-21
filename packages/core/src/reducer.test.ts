@@ -20,14 +20,23 @@ describe('applyAgentEvent · 文本增量', () => {
     expect(s[0]).toEqual({ kind: 'reasoning', text: '思考中' })
   })
 
-  it('超长条目截尾保护', () => {
+  it('超长条目只增不截（截头会让展开态已显示的行消失）', () => {
     let s: StreamEntry[] = []
     const chunk = 'a'.repeat(MAX_TEXT_ENTRY_LENGTH)
     s = applyAgentEvent(s, { type: 'text-delta', text: chunk })
     s = applyAgentEvent(s, { type: 'text-delta', text: 'TAIL' })
     const text = (s[0] as { text: string }).text
-    expect(text.length).toBe(MAX_TEXT_ENTRY_LENGTH)
-    expect(text.endsWith('TAIL')).toBe(true)
+    expect(text).toBe(chunk + 'TAIL')
+  })
+
+  it('reasoning 增量超长同样只增不截', () => {
+    let s: StreamEntry[] = []
+    const chunk = 'a'.repeat(MAX_TEXT_ENTRY_LENGTH)
+    s = applyAgentEvent(s, { type: 'reasoning-delta', text: 'HEAD' })
+    s = applyAgentEvent(s, { type: 'reasoning-delta', text: chunk })
+    const text = (s[0] as { text: string }).text
+    expect(text.startsWith('HEAD')).toBe(true)
+    expect(text.length).toBe(chunk.length + 4)
   })
 })
 
@@ -56,6 +65,16 @@ describe('applyAgentEvent · 工具生命周期', () => {
     expect(tool.output).toEqual({ ok: 'success', stdout: 'src' })
     expect(tool.pendingApproval).toBeUndefined()
     expect(tool.streamingOutput).toBeUndefined()
+  })
+
+  it('streamingOutput 超长仍截尾保护内存', () => {
+    let s: StreamEntry[] = []
+    s = applyAgentEvent(s, { type: 'tool-call-start', toolCallId: 't1', toolName: 'bash' })
+    s = applyAgentEvent(s, { type: 'tool-output-delta', toolCallId: 't1', outputText: 'a'.repeat(MAX_TEXT_ENTRY_LENGTH) })
+    s = applyAgentEvent(s, { type: 'tool-output-delta', toolCallId: 't1', outputText: 'TAIL' })
+    const tool = s[0] as Extract<StreamEntry, { kind: 'tool' }>
+    expect(tool.streamingOutput?.length).toBe(MAX_TEXT_ENTRY_LENGTH)
+    expect(tool.streamingOutput?.endsWith('TAIL')).toBe(true)
   })
 
   it('多工具并行时按 toolCallId 精确回填', () => {

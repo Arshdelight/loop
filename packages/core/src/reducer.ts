@@ -3,7 +3,8 @@
  *
  * 提纯自 okoknit 的 pushEvent（App.tsx 内联 reducer），吸收 practi 的
  * streamEntries 维护规则：
- * - text/reasoning 增量合并到上一条同类条目，超长截尾保护内存；
+ * - text/reasoning 增量合并到上一条同类条目，只增不截——截头会把展开态里
+ *   已显示的行弄丢（2026-09-21 tut 实测）；
  * - 工具事件按 toolCallId 精确回填；start 丢失时按 toolName 容错匹配
  *   最近一条未完成的工具条目（okoknit 模式）；
  * - 不改变条目的事件（step-complete/turn-complete）返回原数组引用，
@@ -13,7 +14,7 @@
 import type { AgentEvent } from './events'
 import type { StreamEntry, ToolEntry } from './entries'
 
-/** 单条文本/思考条目的最大保留长度（截尾，okoknit 取 8000）。 */
+/** 单条工具流式输出的最大保留长度（截尾，okoknit 取 8000）；文本/思考条目不截断。 */
 export const MAX_TEXT_ENTRY_LENGTH = 8000
 
 function appendChunk(
@@ -24,7 +25,7 @@ function appendChunk(
   const last = entries[entries.length - 1]
   if (last !== undefined && last.kind === kind) {
     const next = [...entries]
-    next[entries.length - 1] = { kind, text: (last.text + chunk).slice(-MAX_TEXT_ENTRY_LENGTH) }
+    next[entries.length - 1] = { kind, text: last.text + chunk }
     return next
   }
   return [...entries, { kind, text: chunk }]
