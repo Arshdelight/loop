@@ -44,6 +44,31 @@ describe('appendAssistantTurn', () => {
     expect(tool.content.map(p => p.toolCallId)).toEqual(['c1'])
   })
 
+  it('中止回合：{ok:"aborted"} 合成结果照常配对入历史（不丢弃）', () => {
+    const messages = appendAssistantTurn([], {
+      toolCalls: [{ toolCallId: 'c1', toolName: 'send_quiz', input: { topic: '历史' } }],
+      toolResults: new Map([['c1', { ok: 'aborted' }]]),
+    })
+    expect(messages).toHaveLength(2)
+    expect(messages[0]).toEqual({
+      role: 'assistant',
+      content: [
+        { type: 'tool-call', toolCallId: 'c1', toolName: 'send_quiz', input: { topic: '历史' } },
+      ],
+    })
+    expect(messages[1]).toEqual({
+      role: 'tool',
+      content: [
+        {
+          type: 'tool-result',
+          toolCallId: 'c1',
+          toolName: 'send_quiz',
+          output: { type: 'json', value: { ok: 'aborted' } },
+        },
+      ],
+    })
+  })
+
   it('纯文本回合：单条 assistant 消息', () => {
     const messages = appendAssistantTurn([], { text: '你好', toolCalls: [], toolResults: new Map() })
     expect(messages).toEqual([{ role: 'assistant', content: [{ type: 'text', text: '你好' }] }])

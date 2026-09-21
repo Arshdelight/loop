@@ -98,9 +98,11 @@ function errorText(error: unknown): string {
  * 与 tool-result 的差集）。回合以 abort / error 收尾时，先按 start 顺序为
  * 在途调用补发合成 `tool-result { ok: 'aborted' }`（协议约定由 loop-react
  * 渲染为 interrupted 终态，渲染层的扫光按「收到 tool-result 即停」设计），
- * 再发收尾事件。合成结果只进事件流（渲染折叠 / 宿主落库 entries），宿主
- * 攒多轮历史时应把 `ok:'aborted'` 的结果剔除，让悬空调用对照常整对丢弃
- * （见 README「多轮对话历史约定」）。
+ * 再发收尾事件。宿主攒多轮历史时把合成结果与真实结果同等并入：保留
+ * assistant(tool-call) + tool({ ok:'aborted' }) 完整一对，模型下一轮即知
+ * 该调用被中止、不会失忆。这是 practi 验证过的做法（中止时写入真实
+ * role:'tool' 消息）；AI SDK 只拒绝真正悬空的调用（AI_MissingToolResultsError），
+ * 配对完整的 aborted 结果不在其列（见 README「多轮对话历史约定」）。
  */
 async function* translateFullStream(fullStream: AsyncIterable<{ type: string }>): AsyncGenerator<AgentEvent> {
   const inflight = new Map<string, string>() // toolCallId → toolName（Map 保持 start 顺序）

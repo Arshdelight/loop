@@ -8,7 +8,8 @@
  * 宿主从 AgentEvent 流攒出的一回合产出按约定形状成对追加（形状约定详见
  * README「多轮对话历史约定」）：
  * - 有工具调用：assistant(text? + tool-call…) 后紧跟 tool(tool-result…)；
- *   没拿到结果的调用整对丢弃，不留悬空调用；
+ *   完全没结果的调用整对丢弃，不留悬空调用（中止回合的合成结果
+ *   {ok:'aborted'} 照常配对入历史，见 README「多轮对话历史约定」）；
  * - 只有文本：单条 assistant 消息；
  * - 什么都没有：原数组原样返回。
  */
@@ -22,7 +23,7 @@ export interface AssistantTurn {
   text?: string
   /** 本回合发起的工具调用（input 已 settled）。 */
   toolCalls: Array<{ toolCallId: string; toolName: string; input: unknown }>
-  /** 工具结果，按 toolCallId 索引；缺项的调用整对丢弃（不留悬空调用）。 */
+  /** 工具结果（含中止回合的 {ok:'aborted'} 合成结果），按 toolCallId 索引；缺项的调用整对丢弃。 */
   toolResults: ReadonlyMap<string, ToolOutput>
 }
 

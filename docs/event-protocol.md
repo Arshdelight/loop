@@ -48,9 +48,10 @@ for await (const event of agent.stream({ prompt: 'hi' })) dispatch(event)  // �
 
 回合以 `abort` / `error` 收尾时，引擎先按 `tool-call-start` 出现顺序为在途调用
 （已 start 未收到 result）补发合成 `tool-result`（`output: {ok:'aborted'}`），再发
-收尾事件——渲染层据此把工具行落到 interrupted 终态，而不是永远悬挂运行态。合成
-结果只进事件流（渲染折叠 / 宿主落库 entries）；宿主攒多轮历史时应把 `ok:'aborted'`
-的结果剔除，让悬空调用对照常整对丢弃（见 README「多轮对话历史约定」）。
+收尾事件——渲染层据此把工具行落到 interrupted 终态，而不是永远悬挂运行态。宿主
+攒多轮历史时把合成结果与真实结果同等并入，保留 assistant(tool-call) +
+tool({ok:'aborted'}) 完整一对——模型由此知道该调用被中止、不会失忆（见 README
+「多轮对话历史约定」）。
 
 ## HITL（人在环路）
 
@@ -69,7 +70,8 @@ practi 后端行为一致。
 
 `agent.stream({ messages })` 的多轮历史由宿主自己攒（ModelMessage[]）。约定：
 assistant 消息里的 `tool-call` 与紧随其后的独立 `role:'tool'` 消息里的
-`tool-result` 必须成对出现、不留悬空调用——嵌在 assistant 消息里的 tool-result
+`tool-result` 必须成对出现、不留悬空调用（中止回合的 `{ok:'aborted'}` 合成
+结果即其结果，照常配对入历史）——嵌在 assistant 消息里的 tool-result
 会被 AI SDK 提示词转换忽略，悬空调用导致下回合抛 `AI_MissingToolResultsError`。
 最小形状示例与 `appendAssistantTurn` 辅助函数见
 [README「多轮对话历史约定」](../README.md#多轮对话历史约定默认引擎)。
