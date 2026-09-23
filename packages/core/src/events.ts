@@ -34,6 +34,8 @@ export interface TurnUsage {
   inputTokens?: number
   outputTokens?: number
   totalTokens?: number
+  /** 输入中被缓存命中的 token 数（provider 上报，可能缺省）。 */
+  cachedInputTokens?: number
 }
 
 export type AgentEvent =

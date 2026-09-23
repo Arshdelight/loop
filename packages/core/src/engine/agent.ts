@@ -75,13 +75,20 @@ function toFinishReason(reason: string): FinishReason {
 }
 
 /** AI SDK totalUsage → 回合累计用量；三项皆缺省时整体缺省（provider 可能不报 usage）。 */
-function toUsage(usage: unknown): TurnUsage | undefined {
+export function toUsage(usage: unknown): TurnUsage | undefined {
   const u = (typeof usage === 'object' && usage !== null ? usage : {}) as Record<string, unknown>
   const inputTokens = typeof u.inputTokens === 'number' ? u.inputTokens : undefined
   const outputTokens = typeof u.outputTokens === 'number' ? u.outputTokens : undefined
   const totalTokens = typeof u.totalTokens === 'number' ? u.totalTokens : undefined
+  // 缓存命中：ai v7 在 inputTokenDetails.cacheReadTokens，旧版形状是顶层
+  // cachedInputTokens——两种形状都兼容，取不到即缺省（导出仅为可测，
+  // engine/index.ts 不转发，不进公共 API）
+  const details = u.inputTokenDetails as Record<string, unknown> | undefined
+  const cachedInputTokens =
+    (typeof details?.cacheReadTokens === 'number' ? details.cacheReadTokens : undefined) ??
+    (typeof u.cachedInputTokens === 'number' ? u.cachedInputTokens : undefined)
   if (inputTokens === undefined && outputTokens === undefined && totalTokens === undefined) return undefined
-  return { inputTokens, outputTokens, totalTokens }
+  return { inputTokens, outputTokens, totalTokens, cachedInputTokens }
 }
 
 function errorText(error: unknown): string {

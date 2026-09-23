@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { jsonSchema, tool } from 'ai'
 import type { LanguageModel, ToolSet } from 'ai'
-import { createLoopAgent } from './agent'
+import { createLoopAgent, toUsage } from './agent'
 import type { AgentEvent } from '../events'
 
 type MockScript =
@@ -154,6 +154,23 @@ describe('createLoopAgent · fullStream → AgentEvent 翻译', () => {
     expect(step.usage).toBeUndefined()
   })
 
+  it('缓存命中：raw usage 的 cacheRead 透传为 usage.cachedInputTokens（step/turn 两处）', async () => {
+    const { model } = mockModel([
+      [
+        { type: 'text-start', id: 't0' },
+        { type: 'text-delta', id: 't0', delta: '好' },
+        { type: 'text-end', id: 't0' },
+        { type: 'finish', finishReason: { unified: 'stop', raw: 'stop' }, usage: { inputTokens: { total: 10, cacheRead: 7 }, outputTokens: { total: 5 } } },
+      ],
+    ])
+    const agent = createLoopAgent({ model })
+    const events = await collect(agent.stream({ prompt: 'hi' }))
+    const step = events.find(e => e.type === 'step-complete') as Extract<AgentEvent, { type: 'step-complete' }>
+    expect(step.usage).toEqual({ inputTokens: 10, outputTokens: 5, totalTokens: 15, cachedInputTokens: 7 })
+    const finish = events[events.length - 1] as Extract<AgentEvent, { type: 'turn-complete' }>
+    expect(finish.usage).toEqual({ inputTokens: 10, outputTokens: 5, totalTokens: 15, cachedInputTokens: 7 })
+  })
+
   it('工具回合：tool-call → execute → tool-result（output 归一为 ok 约定）', async () => {
     const { model } = mockModel([
       [
@@ -202,6 +219,35 @@ describe('createLoopAgent · fullStream → AgentEvent 翻译', () => {
     const events = await collect(agent.stream({ prompt: 'go' }))
     const result = events.find(e => e.type === 'tool-result') as Extract<AgentEvent, { type: 'tool-result' }>
     expect(result.output).toEqual({ ok: 'success', value: 'plain string output' })
+  })
+})
+
+describe('toUsage · 缓存命中映射（cachedInputTokens）', () => {
+  it('ai v7 形状：inputTokenDetails.cacheReadTokens', () => {
+    expect(
+      toUsage({ inputTokens: 10, outputTokens: 5, totalTokens: 15, inputTokenDetails: { cacheReadTokens: 7 } }),
+    ).toEqual({ inputTokens: 10, outputTokens: 5, totalTokens: 15, cachedInputTokens: 7 })
+  })
+
+  it('旧版形状：顶层 cachedInputTokens；v7 字段存在时优先', () => {
+    expect(toUsage({ inputTokens: 10, outputTokens: 5, totalTokens: 15, cachedInputTokens: 7 })).toEqual({
+      inputTokens: 10,
+      outputTokens: 5,
+      totalTokens: 15,
+      cachedInputTokens: 7,
+    })
+    expect(
+      toUsage({ inputTokens: 10, outputTokens: 5, totalTokens: 15, cachedInputTokens: 7, inputTokenDetails: { cacheReadTokens: 3 } }),
+    ).toEqual({ inputTokens: 10, outputTokens: 5, totalTokens: 15, cachedInputTokens: 3 })
+  })
+
+  it('provider 未上报缓存命中 → cachedInputTokens 缺省', () => {
+    expect(toUsage({ inputTokens: 10, outputTokens: 5, totalTokens: 15 })).toEqual({
+      inputTokens: 10,
+      outputTokens: 5,
+      totalTokens: 15,
+    })
+    expect(toUsage(undefined)).toBeUndefined()
   })
 })
 
