@@ -220,6 +220,10 @@ export function createLoopAgent(options: LoopAgentOptions): LoopAgent {
     instructions,
     tools,
     stopWhen: isStepCount(maxSteps),
+    // 上下文重建依赖 messages 里的 system 消息（宿主的 scope note、随问旁路
+    // 说明等，放 messages 而非 instructions 才能命中 KV 前缀缓存）——须向
+    // AI SDK 声明放行（v7 standardizePrompt 默认拒绝）
+    allowSystemInMessages: true,
   }
   const finalSettings = imageLoopback ? withImageLoopback(settings) : settings
   const raw = new ToolLoopAgent(finalSettings as ConstructorParameters<typeof ToolLoopAgent>[0])
