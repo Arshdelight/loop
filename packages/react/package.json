@@ -1,6 +1,6 @@
 {
   "name": "@arshdelight/loop-react",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Agent UI for loop: ToolRow, tool renderer registry with Generic Fallback, markdown renderer (highlight.js / katex / mermaid), bilingual i18n, theming, renderer workbench",
   "type": "module",
   "license": "MIT",
